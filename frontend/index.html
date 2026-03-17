@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroBot — Solar System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/calendar.css">
+</head>
+<body>
+    <canvas id="scene"></canvas>
+
+    <div id="scanlines"></div>
+
+    <div id="hud">
+        <div id="hud-title">ASTROBOT</div>
+        <div id="hud-date"></div>
+        <div id="hud-info"></div>
+    </div>
+
+    <!-- Body info tooltip (shown on hover) -->
+    <div id="body-info"></div>
+
+    <!-- Time controls -->
+    <div id="time-control">
+        <button id="btn-prev" title="Previous day">&lt;&lt;</button>
+        <button id="btn-play" title="Play">></button>
+        <button id="btn-next" title="Next day">&gt;&gt;</button>
+        <span id="time-label"></span>
+        <button id="btn-speed-down" title="Slower">-</button>
+        <span id="speed-label">1D/S</span>
+        <button id="btn-speed-up" title="Faster">+</button>
+        <button id="btn-today" title="Reset to today">TODAY</button>
+        <button id="btn-calendar" title="Event calendar">CAL</button>
+    </div>
+
+    <div id="calendar-panel" class="hidden"></div>
+
+    <div id="event-popup" class="hidden">
+        <div id="popup-title"></div>
+        <div id="popup-body"></div>
+        <button id="popup-close">X</button>
+    </div>
+
+    <!-- Controls hint -->
+    <div id="controls-hint">
+        DRAG: ORBIT &nbsp; SCROLL: ZOOM &nbsp; DBL-CLICK: FOCUS
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>

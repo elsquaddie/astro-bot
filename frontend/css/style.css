@@ -1,0 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #e0e0e0;
+}
+
+#scene {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    cursor: grab;
+}
+
+#scene:active {
+    cursor: grabbing;
+}
+
+/* Subtle scanlines — very faint */
+#scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.03) 0px,
+        rgba(0, 0, 0, 0.03) 1px,
+        transparent 1px,
+        transparent 4px
+    );
+    z-index: 10;
+}
+
+/* HUD — top left */
+#hud {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 20;
+    pointer-events: none;
+}
+
+#hud-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(100, 140, 255, 0.3);
+}
+
+#hud-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 8px;
+}
+
+#hud-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.7;
+    max-width: 360px;
+    white-space: pre-line;
+}
+
+/* Body info tooltip */
+#body-info {
+    position: fixed;
+    bottom: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    pointer-events: none;
+    display: none;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+}
+
+/* Time control bar */
+#time-control {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(15, 15, 25, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 10px;
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+}
+
+#time-control button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    min-width: 32px;
+    text-align: center;
+}
+
+#time-control button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+#time-control button:active {
+    background: rgba(100, 140, 255, 0.25);
+    color: #fff;
+}
+
+#time-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    min-width: 110px;
+    text-align: center;
+    padding: 0 8px;
+}
+
+#speed-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.4);
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Controls hint */
+#controls-hint {
+    position: fixed;
+    bottom: 8px;
+    right: 20px;
+    z-index: 20;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+    letter-spacing: 0.5px;
+}
+
+/* Event popup */
+#event-popup {
+    position: fixed;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+    z-index: 30;
+    background: rgba(10, 10, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    max-width: 280px;
+    border-radius: 8px;
+    backdrop-filter: blur(12px);
+}
+
+#event-popup.hidden {
+    display: none;
+}
+
+#popup-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+#popup-body {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+#popup-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    background: none;
+    color: rgba(255, 255, 255, 0.3);
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+#popup-close:hover {
+    color: #fff;
+}

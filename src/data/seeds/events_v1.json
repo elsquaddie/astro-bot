@@ -1,0 +1,60 @@
+{
+  "version": "v1",
+  "events": [
+    {
+      "type": "solar_eclipse",
+      "class_type": "rare",
+      "global_start_time_utc": "2026-08-12T17:46:00Z",
+      "min_lat": 60.0,
+      "max_lat": 75.0,
+      "min_lon": 20.0,
+      "max_lon": 100.0,
+      "parameters": {
+        "eclipse_type": "total",
+        "max_duration_sec": 139,
+        "saros_cycle": 126
+      }
+    },
+    {
+      "type": "meteor_peak",
+      "class_type": "regular",
+      "global_start_time_utc": "2026-08-12T22:00:00Z",
+      "min_lat": null,
+      "max_lat": null,
+      "min_lon": null,
+      "max_lon": null,
+      "parameters": {
+        "shower_name": "Perseids",
+        "zhr": 100,
+        "best_direction": "NE"
+      }
+    },
+    {
+      "type": "supermoon",
+      "class_type": "regular",
+      "global_start_time_utc": "2026-05-26T11:51:00Z",
+      "min_lat": null,
+      "max_lat": null,
+      "min_lon": null,
+      "max_lon": null,
+      "parameters": {
+        "distance_km": 357311,
+        "phase": "full"
+      }
+    },
+    {
+      "type": "lunar_eclipse",
+      "class_type": "rare",
+      "global_start_time_utc": "2026-03-03T11:33:00Z",
+      "min_lat": -70.0,
+      "max_lat": 70.0,
+      "min_lon": -180.0,
+      "max_lon": 180.0,
+      "parameters": {
+        "eclipse_type": "total",
+        "umbral_magnitude": 1.15,
+        "duration_min": 58
+      }
+    }
+  ]
+}
