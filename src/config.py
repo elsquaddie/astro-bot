@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     BOT_MODE: str = "polling"  # polling or webhook
     WEBHOOK_SECRET: str = "changeme"
     WEBHOOK_BASE_URL: str = "https://example.com"
+    DELETE_WEBHOOK_ON_SHUTDOWN: bool = False
 
     # API
     API_SECRET_KEY: str = "changeme"

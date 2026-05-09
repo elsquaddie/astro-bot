@@ -23,6 +23,10 @@ _dp = None
 _polling_task = None
 
 
+def should_delete_webhook_on_shutdown() -> bool:
+    return settings.BOT_MODE == "webhook" and settings.DELETE_WEBHOOK_ON_SHUTDOWN
+
+
 def _init_bot():
     global _bot, _dp
     if _bot is None:
@@ -58,7 +62,7 @@ async def lifespan(app: FastAPI):
         if _polling_task and not _polling_task.done():
             await _dp.stop_polling()
             _polling_task.cancel()
-        if settings.BOT_MODE == "webhook":
+        if should_delete_webhook_on_shutdown():
             await _bot.delete_webhook()
         await _bot.session.close()
 
