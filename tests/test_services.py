@@ -46,6 +46,27 @@ async def test_set_user_location(db_session):
 
 
 @pytest.mark.asyncio
+async def test_set_user_location_with_city_metadata(db_session):
+    user = await set_user_location(
+        db_session,
+        telegram_id=123456,
+        latitude=53.2001,
+        longitude=50.15,
+        tz="Europe/Samara",
+        display_name="Samara, Samara Oblast, Russia",
+        country_code="RU",
+        admin1="Samara Oblast",
+        source_location_id=499099,
+    )
+
+    location = await db_session.get(Location, user.location_id)
+    assert location.display_name == "Samara, Samara Oblast, Russia"
+    assert location.country_code == "RU"
+    assert location.admin1 == "Samara Oblast"
+    assert location.source_location_id == 499099
+
+
+@pytest.mark.asyncio
 async def test_notification_preferences(db_session):
     user = await get_or_create_user(db_session, telegram_id=77777)
     pref = await update_notification_preferences(db_session, user.id, EventClass.RARE, ahead_hours=12)

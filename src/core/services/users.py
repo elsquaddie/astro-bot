@@ -13,6 +13,10 @@ async def get_or_create_location(
     latitude: float,
     longitude: float,
     tz: str,
+    display_name: str | None = None,
+    country_code: str | None = None,
+    admin1: str | None = None,
+    source_location_id: int | None = None,
 ) -> Location:
     """Find or create a location with deduplication by rounded coords."""
     lat_rounded = round(latitude, 2)
@@ -32,10 +36,20 @@ async def get_or_create_location(
             timezone=tz,
             lat_rounded=lat_rounded,
             lon_rounded=lon_rounded,
+            display_name=display_name,
+            country_code=country_code,
+            admin1=admin1,
+            source_location_id=source_location_id,
         )
         session.add(location)
         await session.flush()
         logger.info("location.created", lat=lat_rounded, lon=lon_rounded)
+    else:
+        location.timezone = tz
+        location.display_name = display_name or location.display_name
+        location.country_code = country_code or location.country_code
+        location.admin1 = admin1 or location.admin1
+        location.source_location_id = source_location_id or location.source_location_id
 
     return location
 
@@ -63,10 +77,23 @@ async def set_user_location(
     latitude: float,
     longitude: float,
     tz: str,
+    display_name: str | None = None,
+    country_code: str | None = None,
+    admin1: str | None = None,
+    source_location_id: int | None = None,
 ) -> User:
     """Set user's location (creates user and location if needed)."""
     user = await get_or_create_user(session, telegram_id)
-    location = await get_or_create_location(session, latitude, longitude, tz)
+    location = await get_or_create_location(
+        session,
+        latitude,
+        longitude,
+        tz,
+        display_name=display_name,
+        country_code=country_code,
+        admin1=admin1,
+        source_location_id=source_location_id,
+    )
     user.location_id = location.id
     await session.commit()
     return user

@@ -117,15 +117,41 @@ async def verify_geocoding() -> list[CheckResult]:
     ]
 
 
+async def verify_location_metadata() -> list[CheckResult]:
+    from src.core.models import Location
+
+    expected_columns = [
+        "display_name",
+        "country_code",
+        "admin1",
+        "source_location_id",
+    ]
+    actual_columns = [
+        column for column in expected_columns if column in Location.__table__.columns
+    ]
+    return [
+        CheckResult(
+            feature="location_metadata",
+            name="Location model exposes city metadata columns",
+            expected={"columns": expected_columns},
+            actual={"columns": actual_columns},
+            passed=actual_columns == expected_columns,
+        )
+    ]
+
+
 async def run(selected: str) -> list[CheckResult]:
     if selected == "feature-flags":
         return await verify_feature_flags()
     if selected == "geocoding":
         return await verify_geocoding()
+    if selected == "location-metadata":
+        return await verify_location_metadata()
     if selected == "all":
         results: list[CheckResult] = []
         results.extend(await verify_feature_flags())
         results.extend(await verify_geocoding())
+        results.extend(await verify_location_metadata())
         return results
     raise ValueError(f"Unknown verification target: {selected}")
 
@@ -134,7 +160,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "target",
-        choices=["all", "feature-flags", "geocoding"],
+        choices=["all", "feature-flags", "geocoding", "location-metadata"],
         help="Verification target to run.",
     )
     args = parser.parse_args()

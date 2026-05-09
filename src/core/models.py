@@ -55,6 +55,10 @@ class Location(TimestampMixin, Base):
     timezone: Mapped[str] = mapped_column(String(64), nullable=False)
     lat_rounded: Mapped[float] = mapped_column(Float, nullable=False)
     lon_rounded: Mapped[float] = mapped_column(Float, nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    country_code: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    admin1: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    source_location_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     users: Mapped[list["User"]] = relationship(back_populates="location")
     visibility_cache: Mapped[list["EventVisibilityCache"]] = relationship(back_populates="location")
