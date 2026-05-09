@@ -219,6 +219,67 @@ async def verify_visibility_cache() -> list[CheckResult]:
         await engine.dispose()
 
 
+async def verify_weather() -> list[CheckResult]:
+    from src.core.services.observation_conditions import (
+        ObservationCondition,
+        score_observation_conditions,
+    )
+    from src.core.services.weather import OpenMeteoWeatherClient
+
+    score = score_observation_conditions(
+        cloud_cover=20,
+        precipitation_probability=5,
+        visibility_m=20000,
+        event_time_utc=datetime(2026, 5, 26, 18, 0, tzinfo=timezone.utc),
+        forecast_available=True,
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "hourly": {
+                    "time": ["2026-05-26T18:00"],
+                    "cloud_cover": [20],
+                    "precipitation_probability": [5],
+                    "visibility": [20000],
+                }
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as client:
+        weather = OpenMeteoWeatherClient(client=client, base_url="https://api.open-meteo.com")
+        hourly = await weather.get_hourly_weather(
+            latitude=53.2,
+            longitude=50.15,
+            event_time_utc=datetime(2026, 5, 26, 18, 0, tzinfo=timezone.utc),
+            timezone="UTC",
+        )
+
+    expected = {
+        "condition": ObservationCondition.EXCELLENT.value,
+        "cloud_cover": 20,
+        "precipitation_probability": 5,
+        "visibility_m": 20000,
+    }
+    actual = {
+        "condition": score.label.value,
+        "cloud_cover": hourly.cloud_cover if hourly else None,
+        "precipitation_probability": hourly.precipitation_probability if hourly else None,
+        "visibility_m": hourly.visibility_m if hourly else None,
+    }
+    return [
+        CheckResult(
+            feature="weather",
+            name="Weather forecast and condition scoring match excellent sky",
+            expected=expected,
+            actual=actual,
+            passed=actual == expected,
+        )
+    ]
+
+
 async def run(selected: str) -> list[CheckResult]:
     if selected == "feature-flags":
         return await verify_feature_flags()
@@ -228,12 +289,15 @@ async def run(selected: str) -> list[CheckResult]:
         return await verify_location_metadata()
     if selected == "visibility-cache":
         return await verify_visibility_cache()
+    if selected == "weather":
+        return await verify_weather()
     if selected == "all":
         results: list[CheckResult] = []
         results.extend(await verify_feature_flags())
         results.extend(await verify_geocoding())
         results.extend(await verify_location_metadata())
         results.extend(await verify_visibility_cache())
+        results.extend(await verify_weather())
         return results
     raise ValueError(f"Unknown verification target: {selected}")
 
@@ -248,6 +312,7 @@ def main() -> int:
             "geocoding",
             "location-metadata",
             "visibility-cache",
+            "weather",
         ],
         help="Verification target to run.",
     )
