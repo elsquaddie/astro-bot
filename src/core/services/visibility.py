@@ -102,3 +102,30 @@ async def build_visibility_cache(session: AsyncSession) -> None:
             await compute_and_cache_visibility(session, event, location)
 
     logger.info("cache_builder.done")
+
+
+async def build_visibility_cache_for_location(
+    session: AsyncSession,
+    location_id: int,
+    days_ahead: int = 30,
+) -> int:
+    """Compute visibility cache for one location immediately."""
+    location = await session.get(Location, location_id)
+    if location is None:
+        return 0
+
+    events = await get_candidate_events(session, days_ahead=days_ahead)
+    computed = 0
+
+    for event in events:
+        if event.min_lat is not None:
+            if not (
+                event.min_lat <= location.latitude <= event.max_lat
+                and event.min_lon <= location.longitude <= event.max_lon
+            ):
+                continue
+
+        await compute_and_cache_visibility(session, event, location)
+        computed += 1
+
+    return computed

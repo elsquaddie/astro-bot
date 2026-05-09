@@ -11,9 +11,12 @@ import importlib
 import json
 import os
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @dataclass(frozen=True)
@@ -140,6 +143,82 @@ async def verify_location_metadata() -> list[CheckResult]:
     ]
 
 
+async def verify_visibility_cache() -> list[CheckResult]:
+    from src.core.models import (
+        AstronomicalEvent,
+        Base,
+        EventClass,
+        EventVisibilityCache,
+        Location,
+    )
+    import src.core.services.visibility as visibility_service
+
+    database_url = os.getenv(
+        "TEST_DATABASE_URL",
+        "postgresql+asyncpg://astro:astro_pass@localhost:5432/astro_bot_test",
+    )
+    engine = create_async_engine(database_url, echo=False)
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    original_compute = visibility_service.compute_visibility_async
+
+    async def fake_compute_visibility_async(**kwargs):
+        return True, kwargs["event_time_utc"]
+
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+
+        async with session_factory() as session:
+            location = Location(
+                latitude=53.2001,
+                longitude=50.15,
+                timezone="Europe/Samara",
+                lat_rounded=53.2,
+                lon_rounded=50.15,
+            )
+            session.add(location)
+            await session.flush()
+
+            event = AstronomicalEvent(
+                type="meteor_peak",
+                class_type=EventClass.REGULAR,
+                global_start_time_utc=datetime.now(timezone.utc) + timedelta(days=2),
+                parameters={"shower_name": "Verifierids"},
+                seed_version="verify",
+            )
+            session.add(event)
+            await session.commit()
+
+            visibility_service.compute_visibility_async = fake_compute_visibility_async
+            computed_count = await visibility_service.build_visibility_cache_for_location(
+                session,
+                location.id,
+                days_ahead=7,
+            )
+
+            result = await session.execute(select(func.count(EventVisibilityCache.id)))
+            cache_count = result.scalar_one()
+
+        expected = {"computed_count": 1, "cache_count": 1}
+        actual = {"computed_count": computed_count, "cache_count": cache_count}
+        return [
+            CheckResult(
+                feature="visibility_cache",
+                name="On-demand location cache creates one visibility row",
+                expected=expected,
+                actual=actual,
+                passed=actual == expected,
+            )
+        ]
+    finally:
+        visibility_service.compute_visibility_async = original_compute
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
+
+
 async def run(selected: str) -> list[CheckResult]:
     if selected == "feature-flags":
         return await verify_feature_flags()
@@ -147,11 +226,14 @@ async def run(selected: str) -> list[CheckResult]:
         return await verify_geocoding()
     if selected == "location-metadata":
         return await verify_location_metadata()
+    if selected == "visibility-cache":
+        return await verify_visibility_cache()
     if selected == "all":
         results: list[CheckResult] = []
         results.extend(await verify_feature_flags())
         results.extend(await verify_geocoding())
         results.extend(await verify_location_metadata())
+        results.extend(await verify_visibility_cache())
         return results
     raise ValueError(f"Unknown verification target: {selected}")
 
@@ -160,7 +242,13 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "target",
-        choices=["all", "feature-flags", "geocoding", "location-metadata"],
+        choices=[
+            "all",
+            "feature-flags",
+            "geocoding",
+            "location-metadata",
+            "visibility-cache",
+        ],
         help="Verification target to run.",
     )
     args = parser.parse_args()
