@@ -281,7 +281,12 @@ async def verify_weather() -> list[CheckResult]:
 
 
 async def verify_bot_city_flow() -> list[CheckResult]:
-    from src.bot.handlers import format_city_candidates, format_location_saved_message
+    from src.bot.handlers import (
+        format_city_candidates,
+        format_location_saved_message,
+        format_no_events_message,
+        format_visibility_pending_message,
+    )
     from src.core.services.geocoding import GeocodingCandidate
 
     candidate = GeocodingCandidate(
@@ -298,18 +303,28 @@ async def verify_bot_city_flow() -> list[CheckResult]:
     )
     candidates_text = format_city_candidates([candidate])
     saved_text = format_location_saved_message(candidate.display_name)
+    pending_text = format_visibility_pending_message(candidate.display_name)
+    no_events_text = format_no_events_message(candidate.display_name, days=7)
 
     expected = {
         "candidate_mentions_city": True,
         "candidate_asks_to_choose": True,
         "saved_mentions_city": True,
         "saved_mentions_calculation": True,
+        "pending_mentions_city": True,
+        "pending_mentions_calculation": True,
+        "no_events_mentions_city": True,
+        "no_events_mentions_period": True,
     }
     actual = {
         "candidate_mentions_city": "Samara, Samara Oblast, Russia" in candidates_text,
         "candidate_asks_to_choose": "Выбери город" in candidates_text,
         "saved_mentions_city": "Samara, Samara Oblast, Russia" in saved_text,
         "saved_mentions_calculation": "считаю" in saved_text.lower(),
+        "pending_mentions_city": "Samara, Samara Oblast, Russia" in pending_text,
+        "pending_mentions_calculation": "еще считаю" in pending_text.lower(),
+        "no_events_mentions_city": "Samara, Samara Oblast, Russia" in no_events_text,
+        "no_events_mentions_period": "ближайшие 7 дней" in no_events_text,
     }
     return [
         CheckResult(

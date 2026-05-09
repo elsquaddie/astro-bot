@@ -1,5 +1,17 @@
-from src.bot.handlers import format_city_candidates, format_location_saved_message
+from datetime import datetime, timedelta, timezone
+
+import pytest
+
+from src.bot.handlers import (
+    cmd_today,
+    format_city_candidates,
+    format_location_saved_message,
+    format_no_events_message,
+    format_visibility_pending_message,
+)
+from src.core.models import AstronomicalEvent, EventClass, EventVisibilityCache
 from src.core.services.geocoding import GeocodingCandidate
+from src.core.services.users import set_user_location
 
 
 def test_format_city_candidates():
@@ -29,3 +41,75 @@ def test_format_location_saved_message():
 
     assert "Samara, Samara Oblast, Russia" in text
     assert "считаю" in text.lower()
+
+
+def test_format_visibility_pending_message():
+    text = format_visibility_pending_message("Samara, Samara Oblast, Russia")
+
+    assert "еще считаю" in text.lower()
+    assert "Samara" in text
+
+
+def test_format_no_events_message():
+    text = format_no_events_message("Samara, Samara Oblast, Russia", days=7)
+
+    assert "ближайшие 7 дней" in text
+    assert "Samara" in text
+
+
+@pytest.mark.asyncio
+async def test_today_builds_missing_cache_before_answering(db_session, monkeypatch):
+    class FakeFromUser:
+        id = 123456
+
+    class FakeMessage:
+        from_user = FakeFromUser()
+
+        def __init__(self):
+            self.answers = []
+
+        async def answer(self, text, **kwargs):
+            self.answers.append(text)
+
+    user = await set_user_location(
+        db_session,
+        telegram_id=FakeFromUser.id,
+        latitude=53.2001,
+        longitude=50.15,
+        tz="Europe/Samara",
+        display_name="Samara, Samara Oblast, Russia",
+    )
+    event = AstronomicalEvent(
+        type="meteor_peak",
+        class_type=EventClass.REGULAR,
+        global_start_time_utc=datetime.now(timezone.utc) + timedelta(days=2),
+        parameters={"shower_name": "Testids"},
+        seed_version="test",
+    )
+    db_session.add(event)
+    await db_session.commit()
+
+    async def fake_build_visibility_cache_for_location(session, location_id, days_ahead=30):
+        session.add(
+            EventVisibilityCache(
+                location_id=location_id,
+                event_id=event.id,
+                is_visible=True,
+                local_best_time=event.global_start_time_utc,
+            )
+        )
+        await session.commit()
+        return 1
+
+    monkeypatch.setattr(
+        "src.bot.handlers.build_visibility_cache_for_location",
+        fake_build_visibility_cache_for_location,
+    )
+
+    message = FakeMessage()
+    await cmd_today(message, db_session)
+
+    assert user.location_id is not None
+    assert len(message.answers) == 1
+    assert "Upcoming astronomical events" in message.answers[0]
+    assert "Testids" in message.answers[0]

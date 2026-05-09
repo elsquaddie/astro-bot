@@ -56,6 +56,17 @@ def format_location_saved_message(display_name: str) -> str:
     )
 
 
+def format_visibility_pending_message(location_name: str) -> str:
+    return (
+        f"Я еще считаю видимость событий для {location_name}. "
+        "Попробуй еще раз через несколько секунд, либо я пришлю результат сам."
+    )
+
+
+def format_no_events_message(location_name: str, days: int) -> str:
+    return f"Для {location_name} в ближайшие {days} дней заметных событий не нашел."
+
+
 async def save_city_candidate(
     message: Message,
     session: AsyncSession,
@@ -202,7 +213,43 @@ async def cmd_today(message: Message, session: AsyncSession) -> None:
     rows = result.all()
 
     if not rows:
-        await message.answer("No visible astronomical events in the next 7 days.")
+        location = await session.get(Location, user.location_id)
+        location_name = (
+            location.display_name
+            if location and location.display_name
+            else "твоей локации"
+        )
+
+        cache_stmt = (
+            select(EventVisibilityCache.id)
+            .where(EventVisibilityCache.location_id == user.location_id)
+            .limit(1)
+        )
+        cache_result = await session.execute(cache_stmt)
+        has_cache = cache_result.scalar_one_or_none() is not None
+
+        if not has_cache:
+            try:
+                await build_visibility_cache_for_location(
+                    session,
+                    user.location_id,
+                    days_ahead=30,
+                )
+            except Exception:
+                await message.answer(format_visibility_pending_message(location_name))
+                return
+
+            result = await session.execute(stmt)
+            rows = result.all()
+
+    if not rows:
+        location = await session.get(Location, user.location_id)
+        location_name = (
+            location.display_name
+            if location and location.display_name
+            else "твоей локации"
+        )
+        await message.answer(format_no_events_message(location_name, days=7))
         return
 
     lines = ["Upcoming astronomical events:\n"]
