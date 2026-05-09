@@ -3,6 +3,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.bot.i18n import DEFAULT_LANGUAGE, normalize_language_code
 from src.core.models import Location, User, UserNotificationPreference, EventClass
 
 logger = structlog.get_logger()
@@ -55,18 +56,28 @@ async def get_or_create_location(
 
 
 async def get_or_create_user(
-    session: AsyncSession, telegram_id: int
+    session: AsyncSession,
+    telegram_id: int,
+    language_code: str | None = None,
 ) -> User:
     """Find or create a user by telegram_id."""
+    normalized_language = (
+        normalize_language_code(language_code)
+        if language_code is not None
+        else DEFAULT_LANGUAGE
+    )
     stmt = select(User).where(User.telegram_id == telegram_id)
     result = await session.execute(stmt)
     user = result.scalar_one_or_none()
 
     if user is None:
-        user = User(telegram_id=telegram_id)
+        user = User(telegram_id=telegram_id, language_code=normalized_language)
         session.add(user)
         await session.flush()
         logger.info("user.created", telegram_id=telegram_id)
+    elif language_code is not None:
+        user.language_code = normalized_language
+        await session.flush()
 
     return user
 

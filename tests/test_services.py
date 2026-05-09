@@ -26,6 +26,46 @@ async def test_get_existing_user(db_session):
 
 
 @pytest.mark.asyncio
+async def test_create_user_stores_supported_language(db_session):
+    user = await get_or_create_user(
+        db_session,
+        telegram_id=54321,
+        language_code="ru-RU",
+    )
+
+    assert user.language_code == "ru"
+
+
+@pytest.mark.asyncio
+async def test_create_user_defaults_to_english_for_unsupported_language(db_session):
+    user = await get_or_create_user(
+        db_session,
+        telegram_id=54322,
+        language_code="de",
+    )
+
+    assert user.language_code == "en"
+
+
+@pytest.mark.asyncio
+async def test_existing_user_language_updates_when_supported_language_provided(db_session):
+    user = await get_or_create_user(
+        db_session,
+        telegram_id=54323,
+        language_code="en",
+    )
+
+    updated = await get_or_create_user(
+        db_session,
+        telegram_id=54323,
+        language_code="ru",
+    )
+
+    assert updated.id == user.id
+    assert updated.language_code == "ru"
+
+
+@pytest.mark.asyncio
 async def test_create_location(db_session):
     loc = await get_or_create_location(db_session, 55.7558, 37.6173, "Europe/Moscow")
     assert loc.lat_rounded == 55.76

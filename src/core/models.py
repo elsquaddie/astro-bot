@@ -72,6 +72,7 @@ class User(TimestampMixin, Base):
     location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"), nullable=True)
     notify_rare: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     notify_regular: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    language_code: Mapped[str] = mapped_column(String(8), default="en", nullable=False)
 
     location: Mapped[Location | None] = relationship(back_populates="users")
     notification_preferences: Mapped[list["UserNotificationPreference"]] = relationship(
