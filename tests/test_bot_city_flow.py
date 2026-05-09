@@ -36,6 +36,49 @@ def test_format_city_candidates():
     assert "Выбери город" in text
 
 
+def test_format_city_candidates_supports_english():
+    candidates = [
+        GeocodingCandidate(
+            source_location_id=5128581,
+            name="New York",
+            display_name="New York, United States",
+            latitude=40.7143,
+            longitude=-74.006,
+            timezone="America/New_York",
+            country_code="US",
+            country="United States",
+            admin1="New York",
+            population=8800000,
+        )
+    ]
+
+    text = format_city_candidates(candidates, language_code="en")
+
+    assert "Choose a city" in text
+    assert "New York, United States" in text
+
+
+def test_format_location_saved_message_supports_english():
+    text = format_location_saved_message("New York, United States", language_code="en")
+
+    assert "Location saved" in text
+    assert "calculating" in text.lower()
+
+
+def test_format_visibility_pending_message_supports_english():
+    text = format_visibility_pending_message("New York, United States", language_code="en")
+
+    assert "still calculating" in text.lower()
+    assert "New York" in text
+
+
+def test_format_no_events_message_supports_english():
+    text = format_no_events_message("New York, United States", days=7, language_code="en")
+
+    assert "next 7 days" in text
+    assert "New York" in text
+
+
 def test_format_location_saved_message():
     text = format_location_saved_message("Samara, Samara Oblast, Russia")
 
