@@ -280,6 +280,48 @@ async def verify_weather() -> list[CheckResult]:
     ]
 
 
+async def verify_bot_city_flow() -> list[CheckResult]:
+    from src.bot.handlers import format_city_candidates, format_location_saved_message
+    from src.core.services.geocoding import GeocodingCandidate
+
+    candidate = GeocodingCandidate(
+        source_location_id=499099,
+        name="Samara",
+        display_name="Samara, Samara Oblast, Russia",
+        latitude=53.2001,
+        longitude=50.15,
+        timezone="Europe/Samara",
+        country_code="RU",
+        country="Russia",
+        admin1="Samara Oblast",
+        population=1170000,
+    )
+    candidates_text = format_city_candidates([candidate])
+    saved_text = format_location_saved_message(candidate.display_name)
+
+    expected = {
+        "candidate_mentions_city": True,
+        "candidate_asks_to_choose": True,
+        "saved_mentions_city": True,
+        "saved_mentions_calculation": True,
+    }
+    actual = {
+        "candidate_mentions_city": "Samara, Samara Oblast, Russia" in candidates_text,
+        "candidate_asks_to_choose": "Выбери город" in candidates_text,
+        "saved_mentions_city": "Samara, Samara Oblast, Russia" in saved_text,
+        "saved_mentions_calculation": "считаю" in saved_text.lower(),
+    }
+    return [
+        CheckResult(
+            feature="bot_city_flow",
+            name="Telegram city flow copy contains city and calculation state",
+            expected=expected,
+            actual=actual,
+            passed=actual == expected,
+        )
+    ]
+
+
 async def run(selected: str) -> list[CheckResult]:
     if selected == "feature-flags":
         return await verify_feature_flags()
@@ -291,6 +333,8 @@ async def run(selected: str) -> list[CheckResult]:
         return await verify_visibility_cache()
     if selected == "weather":
         return await verify_weather()
+    if selected == "bot-city-flow":
+        return await verify_bot_city_flow()
     if selected == "all":
         results: list[CheckResult] = []
         results.extend(await verify_feature_flags())
@@ -298,6 +342,7 @@ async def run(selected: str) -> list[CheckResult]:
         results.extend(await verify_location_metadata())
         results.extend(await verify_visibility_cache())
         results.extend(await verify_weather())
+        results.extend(await verify_bot_city_flow())
         return results
     raise ValueError(f"Unknown verification target: {selected}")
 
@@ -313,6 +358,7 @@ def main() -> int:
             "location-metadata",
             "visibility-cache",
             "weather",
+            "bot-city-flow",
         ],
         help="Verification target to run.",
     )

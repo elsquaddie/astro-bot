@@ -15,6 +15,7 @@ from aiogram.types import (
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
 from src.core.models import (
     AstronomicalEvent,
     EventClass,
@@ -28,6 +29,8 @@ from src.core.services.users import (
     set_user_location,
     update_notification_preferences,
 )
+from src.core.services.geocoding import GeocodingCandidate, OpenMeteoGeocoder
+from src.core.services.visibility import build_visibility_cache_for_location
 
 router = Router()
 
@@ -37,6 +40,42 @@ EVENT_TYPE_EMOJI = {
     "meteor_peak": "\u2604\ufe0f",
     "supermoon": "\ud83c\udf15",
 }
+
+
+def format_city_candidates(candidates: list[GeocodingCandidate]) -> str:
+    lines = ["Выбери город:"]
+    for index, candidate in enumerate(candidates, start=1):
+        lines.append(f"{index}. {candidate.display_name}")
+    return "\n".join(lines)
+
+
+def format_location_saved_message(display_name: str) -> str:
+    return (
+        f"Локация сохранена: {display_name}\n\n"
+        "Сейчас считаю, какие события будет видно отсюда."
+    )
+
+
+async def save_city_candidate(
+    message: Message,
+    session: AsyncSession,
+    telegram_id: int,
+    candidate: GeocodingCandidate,
+) -> None:
+    user = await set_user_location(
+        session,
+        telegram_id,
+        candidate.latitude,
+        candidate.longitude,
+        candidate.timezone,
+        display_name=candidate.display_name,
+        country_code=candidate.country_code,
+        admin1=candidate.admin1,
+        source_location_id=candidate.source_location_id,
+    )
+    if user.location_id is not None:
+        await build_visibility_cache_for_location(session, user.location_id, days_ahead=30)
+    await message.answer(format_location_saved_message(candidate.display_name))
 
 
 @router.message(Command("start"))
@@ -78,6 +117,60 @@ async def handle_location(message: Message, session: AsyncSession) -> None:
         "Use /today to see today's events or /settings to configure notifications.",
         reply_markup=ReplyKeyboardRemove(),
     )
+
+
+@router.message(F.text & ~F.text.startswith("/"))
+async def handle_city_text(message: Message, session: AsyncSession) -> None:
+    query = message.text.strip()
+    geocoder = OpenMeteoGeocoder(
+        base_url=settings.OPEN_METEO_GEOCODING_BASE_URL,
+    )
+    candidates = await geocoder.search(query, language="ru", count=5)
+
+    if not candidates:
+        await message.answer(
+            "Я не нашел такой город. Попробуй написать город и страну, например: Самара, Россия."
+        )
+        return
+
+    if len(candidates) == 1:
+        await save_city_candidate(message, session, message.from_user.id, candidates[0])
+        return
+
+    buttons = []
+    for candidate in candidates[:5]:
+        buttons.append([
+            InlineKeyboardButton(
+                text=candidate.display_name[:60],
+                callback_data=f"city:{candidate.source_location_id}",
+            )
+        ])
+
+    await message.answer(
+        format_city_candidates(candidates[:5]),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+    )
+
+
+@router.callback_query(F.data.startswith("city:"))
+async def select_city(callback: CallbackQuery, session: AsyncSession) -> None:
+    source_location_id = int(callback.data.split(":", 1)[1])
+    geocoder = OpenMeteoGeocoder(
+        base_url=settings.OPEN_METEO_GEOCODING_BASE_URL,
+    )
+    candidate = await geocoder.get_by_id(source_location_id, language="ru")
+
+    if candidate is None:
+        await callback.answer("Город не найден, попробуй написать название еще раз.")
+        return
+
+    await save_city_candidate(
+        callback.message,
+        session,
+        callback.from_user.id,
+        candidate,
+    )
+    await callback.answer("Город сохранен")
 
 
 @router.message(Command("today"))
