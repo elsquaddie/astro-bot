@@ -12,6 +12,7 @@ import json
 import os
 from dataclasses import asdict, dataclass
 
+import httpx
 from httpx import ASGITransport, AsyncClient
 
 
@@ -62,11 +63,70 @@ async def verify_feature_flags() -> list[CheckResult]:
     return checks
 
 
+async def verify_geocoding() -> list[CheckResult]:
+    from src.core.services.geocoding import OpenMeteoGeocoder
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/v1/search"):
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "id": 499099,
+                            "name": "Samara",
+                            "latitude": 53.2001,
+                            "longitude": 50.15,
+                            "timezone": "Europe/Samara",
+                            "country_code": "RU",
+                            "country": "Russia",
+                            "admin1": "Samara Oblast",
+                            "population": 1170000,
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404, json={"error": True})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as client:
+        geocoder = OpenMeteoGeocoder(
+            client=client,
+            base_url="https://geocoding-api.open-meteo.com",
+        )
+        results = await geocoder.search("Самара", language="ru")
+
+    expected = {
+        "count": 1,
+        "display_name": "Samara, Samara Oblast, Russia",
+        "timezone": "Europe/Samara",
+    }
+    actual = {
+        "count": len(results),
+        "display_name": results[0].display_name if results else None,
+        "timezone": results[0].timezone if results else None,
+    }
+    return [
+        CheckResult(
+            feature="geocoding",
+            name="Open-Meteo city response is parsed into a candidate",
+            expected=expected,
+            actual=actual,
+            passed=actual == expected,
+        )
+    ]
+
+
 async def run(selected: str) -> list[CheckResult]:
     if selected == "feature-flags":
         return await verify_feature_flags()
+    if selected == "geocoding":
+        return await verify_geocoding()
     if selected == "all":
-        return await verify_feature_flags()
+        results: list[CheckResult] = []
+        results.extend(await verify_feature_flags())
+        results.extend(await verify_geocoding())
+        return results
     raise ValueError(f"Unknown verification target: {selected}")
 
 
@@ -74,7 +134,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "target",
-        choices=["all", "feature-flags"],
+        choices=["all", "feature-flags", "geocoding"],
         help="Verification target to run.",
     )
     args = parser.parse_args()
