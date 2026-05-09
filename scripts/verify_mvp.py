@@ -337,6 +337,144 @@ async def verify_bot_city_flow() -> list[CheckResult]:
     ]
 
 
+async def verify_i18n() -> list[CheckResult]:
+    from src.bot.handlers import (
+        format_city_candidates,
+        format_location_saved_message,
+        format_no_events_message,
+    )
+    from src.bot.i18n import (
+        SUPPORTED_LANGUAGES,
+        all_translation_keys,
+        language_name,
+        t,
+    )
+    from src.core.services.geocoding import GeocodingCandidate
+
+    keys_by_language = all_translation_keys()
+    expected_languages = sorted(SUPPORTED_LANGUAGES)
+    actual_languages = sorted(keys_by_language)
+    reference_keys = keys_by_language["en"]
+    missing_by_language = {
+        language: sorted(reference_keys - keys)
+        for language, keys in keys_by_language.items()
+    }
+    extra_by_language = {
+        language: sorted(keys - reference_keys)
+        for language, keys in keys_by_language.items()
+    }
+
+    candidate = GeocodingCandidate(
+        source_location_id=499099,
+        name="Samara",
+        display_name="Samara, Samara Oblast, Russia",
+        latitude=53.2001,
+        longitude=50.15,
+        timezone="Europe/Samara",
+        country_code="RU",
+        country="Russia",
+        admin1="Samara Oblast",
+        population=1170000,
+    )
+
+    ru_candidates_text = format_city_candidates([candidate], language_code="ru")
+    en_candidates_text = format_city_candidates([candidate], language_code="en")
+    ru_saved_text = format_location_saved_message(candidate.display_name, language_code="ru")
+    en_saved_text = format_location_saved_message(candidate.display_name, language_code="en")
+    ru_no_events_text = format_no_events_message(candidate.display_name, days=7, language_code="ru")
+    en_no_events_text = format_no_events_message(candidate.display_name, days=7, language_code="en")
+
+    checks = [
+        CheckResult(
+            feature="i18n",
+            name="Supported language dictionaries expose the same keys",
+            expected={
+                "languages": expected_languages,
+                "missing_by_language": {"en": [], "ru": []},
+                "extra_by_language": {"en": [], "ru": []},
+            },
+            actual={
+                "languages": actual_languages,
+                "missing_by_language": missing_by_language,
+                "extra_by_language": extra_by_language,
+            },
+            passed=(
+                actual_languages == expected_languages
+                and all(not missing for missing in missing_by_language.values())
+                and all(not extra for extra in extra_by_language.values())
+            ),
+        ),
+        CheckResult(
+            feature="i18n",
+            name="Unsupported language falls back to English",
+            expected={"text": t("en", "set_location_first")},
+            actual={"text": t("de", "set_location_first")},
+            passed=t("de", "set_location_first") == t("en", "set_location_first"),
+        ),
+        CheckResult(
+            feature="i18n",
+            name="Russian Telegram copy renders city flow",
+            expected={
+                "candidate_prompt": True,
+                "saved_calculation": True,
+                "no_events_period": True,
+            },
+            actual={
+                "candidate_prompt": "Выбери город" in ru_candidates_text,
+                "saved_calculation": "Сейчас считаю" in ru_saved_text,
+                "no_events_period": "ближайшие 7 дней" in ru_no_events_text,
+            },
+            passed=(
+                "Выбери город" in ru_candidates_text
+                and "Сейчас считаю" in ru_saved_text
+                and "ближайшие 7 дней" in ru_no_events_text
+            ),
+        ),
+        CheckResult(
+            feature="i18n",
+            name="English Telegram copy renders city flow",
+            expected={
+                "candidate_prompt": True,
+                "saved_calculation": True,
+                "no_events_period": True,
+            },
+            actual={
+                "candidate_prompt": "Choose a city" in en_candidates_text,
+                "saved_calculation": "I'm calculating" in en_saved_text,
+                "no_events_period": "next 7 days" in en_no_events_text,
+            },
+            passed=(
+                "Choose a city" in en_candidates_text
+                and "I'm calculating" in en_saved_text
+                and "next 7 days" in en_no_events_text
+            ),
+        ),
+        CheckResult(
+            feature="i18n",
+            name="Language selector names render in viewer language",
+            expected={
+                "ru_ru": "Русский",
+                "en_ru": "Английский",
+                "ru_en": "Russian",
+                "en_en": "English",
+            },
+            actual={
+                "ru_ru": language_name("ru", "ru"),
+                "en_ru": language_name("en", "ru"),
+                "ru_en": language_name("ru", "en"),
+                "en_en": language_name("en", "en"),
+            },
+            passed=(
+                language_name("ru", "ru") == "Русский"
+                and language_name("en", "ru") == "Английский"
+                and language_name("ru", "en") == "Russian"
+                and language_name("en", "en") == "English"
+            ),
+        ),
+    ]
+    return checks
+
+
 async def run(selected: str) -> list[CheckResult]:
     if selected == "feature-flags":
         return await verify_feature_flags()
@@ -350,6 +488,8 @@ async def run(selected: str) -> list[CheckResult]:
         return await verify_weather()
     if selected == "bot-city-flow":
         return await verify_bot_city_flow()
+    if selected == "i18n":
+        return await verify_i18n()
     if selected == "all":
         results: list[CheckResult] = []
         results.extend(await verify_feature_flags())
@@ -358,6 +498,7 @@ async def run(selected: str) -> list[CheckResult]:
         results.extend(await verify_visibility_cache())
         results.extend(await verify_weather())
         results.extend(await verify_bot_city_flow())
+        results.extend(await verify_i18n())
         return results
     raise ValueError(f"Unknown verification target: {selected}")
 
@@ -374,6 +515,7 @@ def main() -> int:
             "visibility-cache",
             "weather",
             "bot-city-flow",
+            "i18n",
         ],
         help="Verification target to run.",
     )

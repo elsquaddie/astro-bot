@@ -220,3 +220,47 @@ Actual:
 - Bot flow tests passed.
 - Independent verifier matched pending/no-events copy checks.
 - 38 tests passed in 3.80s.
+
+## Feature 8: Telegram I18n For Russian And English
+
+RED:
+
+- Expected: importing `src.bot.i18n` fails before the translation module exists.
+- Actual: `ModuleNotFoundError: No module named 'src.bot.i18n'`.
+- Expected: `get_or_create_user(language_code=...)` fails before user language persistence exists.
+- Actual: `TypeError: get_or_create_user() got an unexpected keyword argument 'language_code'`.
+- Expected: importing `/language` handlers fails before Telegram language switching exists.
+- Actual: `ImportError: cannot import name 'cmd_language' from 'src.bot.handlers'`.
+- Expected: `scripts.verify_mvp.run("i18n")` fails before independent i18n verification exists.
+- Actual: `ValueError: Unknown verification target: i18n`.
+
+GREEN:
+
+Commands:
+
+```bash
+.venv/bin/python -m pytest tests/test_i18n.py -v
+.venv/bin/python -m pytest tests/test_services.py -v
+.venv/bin/alembic upgrade head
+.venv/bin/python -m pytest tests/test_i18n.py tests/test_bot_city_flow.py tests/test_bot_i18n_flow.py -v
+.venv/bin/python -m pytest tests/test_verify_mvp.py -v
+.venv/bin/python scripts/verify_mvp.py i18n
+.venv/bin/python -m pytest tests/ -v
+```
+
+Expected:
+
+- Translation dictionaries exist for `ru` and `en` and expose the same keys.
+- Unsupported language codes fall back to English.
+- User language persists in `users.language_code`.
+- `/start` uses Telegram language metadata.
+- `/language` switches the stored user language.
+- City geocoding receives the stored user language.
+- Russian and English city-flow copy both render expected user-facing text.
+
+Actual:
+
+- `scripts/verify_mvp.py i18n` matched all expected-vs-actual checks.
+- Targeted i18n/Telegram tests passed.
+- Alembic applied `002 -> 003`.
+- Full suite passed: 56 tests in 5.26s.
