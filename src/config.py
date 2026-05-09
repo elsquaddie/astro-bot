@@ -16,6 +16,16 @@ class Settings(BaseSettings):
     # API
     API_SECRET_KEY: str = "changeme"
 
+    # Optional prototype UI/API
+    ENABLE_WEB_UI: bool = False
+    ENABLE_SOLAR_SYSTEM_API: bool = False
+
+    # External data providers
+    GEOCODING_PROVIDER: str = "open-meteo"
+    WEATHER_PROVIDER: str = "open-meteo"
+    OPEN_METEO_BASE_URL: str = "https://api.open-meteo.com"
+    OPEN_METEO_GEOCODING_BASE_URL: str = "https://geocoding-api.open-meteo.com"
+
     # Logging
     LOG_LEVEL: str = "INFO"
 

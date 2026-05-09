@@ -67,10 +67,12 @@ app = FastAPI(title="Astro Bot API", version="0.1.0", lifespan=lifespan)
 
 app.include_router(health_router)
 app.include_router(api_router)
-app.include_router(solar_system_router)
+
+if settings.ENABLE_SOLAR_SYSTEM_API:
+    app.include_router(solar_system_router)
 
 # Serve frontend static files (must be last — catch-all)
-if FRONTEND_DIR.exists():
+if settings.ENABLE_WEB_UI and FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 
