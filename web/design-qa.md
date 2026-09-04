@@ -1,6 +1,12 @@
 # Design QA — Смотри на небо.
 
-Checked 2026-09-05, Europe/Samara. Final result: passed
+Checked 2026-09-05, Europe/Samara. Initial implementation review below: passed.
+
+## Latest user refinement
+
+Removed the Today category subtitle, optics microcopy and local-time separator/suffix; numeric time, name's final period and detail action retained. Decorative crescent and richer star field restored in `public/assets/sky-night-moon.png`. Moon clears the header after reserving the top 55px for device chrome. Verified in the actual browser, including opening event details; screenshot `qa/moon-refinement-browser.png`. Updated `qa/comparison.html` shows the current revision beside the original. The browser capture is 717 × 694 with the phone content at 262.27 × 568.59; the board normalizes that crop to 393 × 852 and does not claim native 1:1 capture quality for this follow-up.
+
+The requested true resolution increase remains unresolved: tool outputs stayed at 853 × 1844. A local 2× interpolation alternative was offered but has not been authorized. See `qa/moon-background.md` for the selected prompt and asset provenance. Build/runtime integrity checks passed. The historical Moon-removal rationale below is superseded by the user's explicit request to retain the decorative Moon.
 
 ## Source and evidence
 
@@ -52,4 +58,6 @@ Checked 2026-09-05, Europe/Samara. Final result: passed
 - [x] Domain checks, production build and runtime integrity checked.
 - [x] Final side-by-side evidence and limitations recorded.
 
-final result: passed
+final result: blocked
+
+Remaining blocker: requested higher native background resolution was not produced; all other requested visual edits are applied.

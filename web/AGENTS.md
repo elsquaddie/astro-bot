@@ -3,6 +3,7 @@
 ## Approved app decisions
 
 - App name is «Смотри на небо.» including the final period. Use the open lunar-ring mark beside the two-line name, aligned with location at right. Do not borrow «вникаем.» / «Собрано.» branding.
+- User refinement 2026-09-05: keep the decorative crescent Moon, abundant fine stars and cozy reference atmosphere. Use a high-resolution background. On Today remove event category subtitle (e.g. «Фаза Луны»), «Подробнее об оптике» and «местное время»/middle-dot separator. Keep «Где и как смотреть», numeric time and the final period in the brand name.
 - Cozy dark mountain sky, Manrope, ivory/periwinkle theme; no 3D solar system and no marketing slogans. Reference and rationale: `../docs/superpowers/specs/2026-09-04-observer-app.md`.
 - Real nearest observable event in the center; date, equipment explanation and «Напомнить мне» above Today/Events/Saved navigation. Do not freeze the mock's Draconids/date or pretend the city was detected.
 - Keep app-scoped `overflow: clip` on the phone viewport: animated dialog autofocus otherwise scrolls the entire phone and exposes its offscreen keyboard. Keep list/sheet body scrolling intact. Verify city-button click with the search keyboard open.

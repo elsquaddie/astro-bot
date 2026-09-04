@@ -17,7 +17,7 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #040d1c url('/assets/sky-night.png') center center / cover no-repeat;
+  background: #020611 url('/assets/sky-night-moon.png') center bottom / 100% calc(100% - 55px) no-repeat;
   --sky-safe-bottom: var(--device-safe-area-bottom, 34px);
   --sky-nav-height: calc(77px + var(--sky-safe-bottom));
 }
