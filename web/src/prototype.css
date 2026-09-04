@@ -1,0 +1,197 @@
+/* App theme. Device geometry, scrolling and keyboard remain template-owned. */
+:where(.sky-app, .sky-sheet) p { color: inherit; }
+/* Animated dialog autofocus must not scroll the phone's clipping viewport.
+   App lists and sheet bodies keep their own scroll containers. */
+.device-screen:has(.sky-app) { overflow: clip; }
+.sky-app, .device-screen:has(.sky-app) .bottom-sheet {
+  --sky-ink: #f3eee6;
+  --sky-muted: #b6b3bd;
+  --sky-accent: #969bff;
+  --sky-line: rgba(197, 201, 229, .13);
+  color: var(--sky-ink);
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-weight: 400;
+}
+.sky-app {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #040d1c url('/assets/sky-night.png') center center / cover no-repeat;
+  --sky-safe-bottom: var(--device-safe-area-bottom, 34px);
+  --sky-nav-height: calc(77px + var(--sky-safe-bottom));
+}
+.mobile-app-viewport[data-platform='android'] .sky-app { --sky-safe-bottom: 0px; }
+.sky-app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 5, 15, .05) 25%, transparent 60%, rgba(0, 5, 15, .65));
+  pointer-events: none;
+}
+.sky-app-events::before, .sky-app-saved::before { background: rgba(3, 11, 25, .88); }
+.sky-app button, .sky-sheet button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+.sky-app button, .sky-sheet button, .sky-sheet a { touch-action: manipulation; }
+.device-screen:has(.sky-app) :is(button, a, input, summary):focus-visible {
+  outline: 2px solid #b3b6ff !important;
+  outline-offset: 4px !important;
+}
+.device-screen:has(.sky-app) .status-bar { color: #f3eee6; }
+.device-screen:has(.sky-app) .status-indicator-svg,
+.device-screen:has(.sky-app) .home-indicator-svg { filter: invert(1); }
+.sky-header {
+  position: absolute;
+  top: 75px;
+  left: 25px;
+  right: 25px;
+  z-index: 3;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  color: var(--sky-ink);
+  background: none;
+  border: 0;
+  text-align: left;
+  flex-shrink: 0;
+  gap: 5px;
+}
+.brand img { width: 40px; height: 40px; margin-left: -5px; object-fit: contain; }
+.brand > span { font-size: 18px; line-height: 1.03; letter-spacing: -.65px; font-weight: 400; }
+.brand-period { color: var(--sky-accent); }
+.location-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  padding: 8px 0 8px 5px;
+  border: 0;
+  background: none;
+  color: var(--sky-ink);
+  font-size: 16px;
+  line-height: 1.25;
+  max-width: 48%;
+  text-align: right;
+  min-height: 44px;
+}
+.location-button svg { color: #acafff; flex-shrink: 0; }
+.location-button span { overflow-wrap: anywhere; }
+.hero {
+  position: absolute;
+  top: 35.1%;
+  left: 45px;
+  right: 35px;
+}
+.eyebrow { color: #c0b9be; font-size: 14px; margin: 0 0 13px; line-height: 1.5; }
+.hero h1 { margin: 0; font-size: 43px; line-height: 1.12; font-weight: 300; letter-spacing: -1.8px; text-wrap: balance; }
+.hero-event { border: 0; padding: 0; background: none; color: inherit; text-align: left; }
+.hero-subtitle { margin: 17px 0 0; font-size: 20px; line-height: 1.45; font-weight: 300; letter-spacing: -.45px; }
+.detail-link { display: inline-flex; align-items: center; gap: 6px; padding: 15px 0; color: #c9c8d3; font-size: 12px; background: none; border: 0; }
+.hero-status { top: 34%; }
+.hero-status .hero-subtitle { font-size: 16px; line-height: 1.65; color: #cecad2; letter-spacing: 0; }
+.hero-status .sky-button { width: auto; padding: 0 20px; margin-top: 25px; }
+.observation-actions { position: absolute; left: 35px; right: 35px; bottom: calc(var(--sky-nav-height) + 15px); }
+.observation-meta { display: grid; grid-template-columns: 1fr 1.04fr; gap: 14px; margin: 0 14px 16px; }
+.observation-meta > button { background: none; border: 0; padding: 0; text-align: left; color: inherit; }
+.observation-meta span { display: block; color: #bdb6ba; font-size: 13px; margin-bottom: 5px; }
+.observation-meta strong { display: block; font-size: 16px; font-weight: 400; line-height: 1.3; white-space: nowrap; letter-spacing: -.4px; }
+.observation-meta small { display: block; font-size: 10px; line-height: 1.5; color: #a9a9b9; margin-top: 5px; }
+.sky-button {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 15px;
+  transition: background .15s, transform .15s;
+}
+.sky-button-primary { background: #838bff; color: #090d24; border-color: #a5aaff; }
+.sky-button-primary:hover { background: #989fff; }
+.sky-button-secondary { background: rgba(144, 153, 208, .1); color: #e6e4f1; border-color: rgba(169, 179, 224, .24); }
+.sky-button-secondary:hover { background: rgba(144, 153, 208, .2); }
+.sky-button-ghost { background: transparent; color: #bfc2d7; }
+.sky-button:active { transform: scale(.985); }
+.sky-button:disabled { opacity: .4; }
+.remind-primary { min-height: 49px; font-size: 18px; font-weight: 400; gap: 12px; }
+.sky-nav {
+  position: absolute;
+  z-index: 4;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(170, 177, 202, .09);
+  background: rgba(0, 5, 15, .56);
+  padding: 10px 15px calc(var(--sky-safe-bottom) + 7px);
+  height: var(--sky-nav-height);
+}
+.sky-nav button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; background: none; border: 0; color: #b5afb5; font-size: 13px; font-weight: 300; padding: 1px 0 11px; }
+.sky-nav button[aria-current] { color: #aaaaff; }
+.sky-nav button[aria-current]::after { content: ''; position: absolute; width: 46px; height: 2px; border-radius: 2px; background: #969bff; bottom: 0; }
+.sky-nav svg { flex-shrink: 0; }
+.list-scroll { top: 153px; bottom: var(--sky-nav-height); }
+.event-list { padding: 6px 28px 30px; }
+.event-list h1 { font-size: 34px; font-weight: 300; letter-spacing: -1.1px; margin: 0 0 8px; }
+.list-intro { font-size: 12px; color: #acaaba; margin: 0 0 28px; line-height: 1.5; }
+.month-label { font-size: 13px; font-weight: 400; text-transform: capitalize; color: #989ff5; margin: 25px 0 5px; letter-spacing: .3px; }
+.event-row { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 0; border-bottom: 1px solid var(--sky-line); background: transparent; padding: 18px 0; color: var(--sky-ink); text-align: left; }
+.event-row span { min-width: 0; }
+.event-row small, .event-row strong, .event-row em { display: block; }
+.event-row small { color: #acaaba; font-size: 12px; }
+.event-row strong { font-weight: 400; font-size: 18px; line-height: 1.4; margin: 6px 0; }
+.event-row em { font-style: normal; color: #9c9aa9; font-size: 11px; }
+.event-row svg { color: #9c9eaf; flex-shrink: 0; }
+.empty-saved { padding: 72px 0 0; text-align: center; }
+.empty-saved svg { color: #969bff; }
+.empty-saved h2 { font-size: 24px; font-weight: 300; margin: 20px 0 12px; }
+.empty-saved p { color: #b7b4c2; font-size: 14px; line-height: 1.6; margin: 0 auto 28px; max-width: 260px; }
+.coverage-note { margin-top: 25px; }
+.storage-message { position: absolute; bottom: calc(var(--sky-nav-height) + 175px); padding: 12px 30px; color: #edd6b7; background: #10172a; font-size: 12px; }
+.device-screen:has(.sky-app) .bottom-sheet { background: #10182b; border-top: 1px solid #303951; border-radius: 23px 23px 0 0; }
+.device-screen:has(.sky-app) .sheet-overlay { background: rgba(0, 4, 14, .64); backdrop-filter: blur(4px); }
+.device-screen:has(.sky-app) .sheet-header { padding: 2px 25px 19px; }
+.device-screen:has(.sky-app) .sheet-title { font-size: 23px; font-weight: 400; line-height: 1.3; letter-spacing: -.6px; }
+.device-screen:has(.sky-app) .sheet-description { color: #b7b7c7; font-size: 13px; margin-top: 5px; line-height: 1.5; }
+.device-screen:has(.sky-app) .sheet-content { padding: 0 25px calc(var(--device-safe-area-bottom) + 20px); }
+.device-screen:has(.sky-app) .sheet-handle { width: 32px; height: 3px; background: #5c6277; }
+.sky-sheet { display: grid; gap: 14px; font-size: 14px; line-height: 1.6; }
+.sky-sheet p { margin: 0; }
+.sky-note { font-size: 12px; line-height: 1.65; color: #aaaebe; }
+.sky-error { color: #f2c2a6; font-size: 13px; line-height: 1.5; }
+.city-search { display: flex; align-items: center; gap: 9px; border: 1px solid #424963; border-radius: 9px; padding: 0 13px; min-height: 49px; color: #bbbcd1; }
+.city-search input { min-width: 0; width: 100%; font: inherit; font-size: 16px; border: 0; background: transparent; padding: 12px 0; color: #f1edf4; caret-color: #969bff; }
+.city-search input::placeholder { color: #979aaf; }
+.city-list { display: grid; }
+.city-list button { border: 0; border-bottom: 1px solid #2a3249; background: none; color: #f0edf3; display: flex; align-items: center; justify-content: space-between; padding: 13px 0; font-size: 15px; text-align: left; line-height: 1.5; }
+.city-list small { display: block; color: #a1a5b9; font-size: 11px; }
+.reminder-date { display: grid; gap: 4px; }
+.reminder-date > span { color: #c2c3d2; font-size: 14px; }
+.reminder-date strong { font-size: 36px; font-weight: 300; letter-spacing: -.8px; line-height: 1.2; }
+.reminder-date small { color: #979db5; font-size: 11px; }
+.lead-time { border: 0; padding: 0; margin: 4px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lead-time legend { font-size: 13px; padding: 0 0 9px; color: #c4c5d3; }
+.lead-time button { border: 1px solid #3a415b; background: transparent; border-radius: 8px; padding: 11px; font-size: 13px; color: #c4c7da; }
+.lead-time button[aria-checked='true'] { border-color: #969bff; color: #e3e3ff; background: #252c4b; }
+.lead-time button:disabled { opacity: .32; }
+.event-detail dl { margin: 0; }
+.event-detail dl > div { padding: 12px 0; border-bottom: 1px solid #293149; }
+.event-detail dt { font-size: 11px; color: #989eb7; margin-bottom: 5px; }
+.event-detail dd { margin: 0; color: #e2e2eb; font-size: 14px; }
+.event-detail dd small { display: block; font-size: 11px; color: #a9afc5; margin-top: 4px; }
+.calculation-details { color: #aeb3c8; font-size: 12px; }
+.calculation-details summary { padding: 10px 0; color: #cbcbed; font-size: 13px; }
+.calculation-details p { margin: 10px 0; }
+.calculation-details a { color: #aaaaff; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .sky-button { transition: none; } }

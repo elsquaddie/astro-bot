@@ -1,0 +1,34 @@
+import tzlookup from 'tz-lookup';
+import type { Place } from './types';
+import { validPlace } from './storage';
+
+export const cities: Place[] = [
+  { name: 'Самара', latitude: 53.1959, longitude: 50.1002, timezone: 'Europe/Samara', region: 'Россия' },
+  { name: 'Москва', latitude: 55.7522, longitude: 37.6156, timezone: 'Europe/Moscow', region: 'Россия' },
+  { name: 'Санкт-Петербург', latitude: 59.9386, longitude: 30.3141, timezone: 'Europe/Moscow', region: 'Россия' },
+];
+export function locate(): Promise<Place> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error('Браузер не поддерживает геолокацию. Выберите город.')); return; }
+    navigator.geolocation.getCurrentPosition(position => {
+      const { latitude, longitude } = position.coords;
+      try { resolve({ name: 'Рядом со мной', latitude, longitude, timezone: tzlookup(latitude, longitude) }); }
+      catch { reject(new Error('Не удалось определить часовой пояс. Выберите город.')); }
+    }, error => reject(new Error(error.code === 1
+      ? 'Доступ к геолокации закрыт. Можно выбрать город вручную.'
+      : 'Не удалось определить местоположение. Попробуйте ещё раз или выберите город.')),
+    { timeout: 12_000, maximumAge: 300_000, enableHighAccuracy: false });
+  });
+}
+export async function searchCities(query: string, signal: AbortSignal): Promise<Place[]> {
+  const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
+  url.search = new URLSearchParams({ name: query, count: '8', language: 'ru', format: 'json' }).toString();
+  const response = await fetch(url, { signal });
+  if (!response.ok) throw new Error('Поиск городов недоступен. Попробуйте позже.');
+  const data = await response.json();
+  if (data.error) throw new Error('Поиск городов недоступен. Попробуйте позже.');
+  return (data.results ?? []).map((r: Record<string, unknown>) => ({
+    name: r.name, latitude: r.latitude, longitude: r.longitude, timezone: r.timezone,
+    region: [r.admin1, r.country].filter(Boolean).join(', '),
+  })).filter(validPlace);
+}
