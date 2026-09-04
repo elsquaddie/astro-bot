@@ -11,7 +11,7 @@ export function timeLabel(instant: string, place: Place) {
 }
 export function windowLabel(start: string, end: string, place: Place) {
   if (dateLabel(start, place, true) === dateLabel(end, place, true))
-    return `${dateLabel(start, place)} · ${timeLabel(start, place)}–${timeLabel(end, place)}`;
+    return `${dateLabel(start, place)}, ${timeLabel(start, place)}–${timeLabel(end, place)}`;
   return `${dateLabel(start, place)}, ${timeLabel(start, place)} — ${dateLabel(end, place)}, ${timeLabel(end, place)}`;
 }
 export function direction(azimuth: number) {

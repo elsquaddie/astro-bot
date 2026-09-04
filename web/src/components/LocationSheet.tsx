@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavigationArrow, MagnifyingGlass, CaretRight } from '@phosphor-icons/react';
-import { BottomSheet, KeyboardInput, useKeyboard } from '../mobile';
+import { BottomSheet, KeyboardInput, useKeyboard } from '../platform';
 import { cities, locate, searchCities } from '../domain/locations';
 import type { Place } from '../domain/types';
 import { Button } from './Button';
@@ -41,7 +41,7 @@ export function LocationSheet({ open, onClose, onSelect }: { open: boolean; onCl
   }
   const list = query.trim().length >= 2 ? results : cities;
   return <BottomSheet open={open} onOpenChange={v => { if (!v) close(); }} title="Где будете смотреть?"
-    description="От места зависят время и видимость событий." snap={0.79}>
+    description="Покажем события, видимые из вашего города." snap={0.79}>
     <div className="sky-sheet" onMouseDown={e => {
       // Keep the input focused until a button click completes. Otherwise blur
       // moves the keyboard-linked sheet between mouse-down and mouse-up.
@@ -63,7 +63,7 @@ export function LocationSheet({ open, onClose, onSelect }: { open: boolean; onCl
       <div className="city-list">{list.map(place => <button key={`${place.latitude}:${place.longitude}`} onClick={() => select(place)}>
         <span>{place.name}<small>{place.region}</small></span><CaretRight size={18} weight="light" />
       </button>)}</div>
-      <p className="sky-note">Координаты для расчёта остаются в браузере. Название города при поиске отправляется в Open-Meteo.</p>
+      <p className="sky-note">Расчёт идёт на устройстве. Поиск городов — Open-Meteo.</p>
       <Button variant="ghost" onClick={close}>Закрыть</Button>
     </div>
   </BottomSheet>;

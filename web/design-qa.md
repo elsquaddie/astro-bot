@@ -1,3 +1,11 @@
+# Standalone application update — 2026-09-05
+
+User accepted the existing visual direction («В остальном ок») and requested the application plus humanizer-ru copy edits. Calendar download and nonfunctional reminder lead selection are removed; saving explicitly says notifications are not connected. No new artwork or interpolation was applied. The historical native-resolution limitation below remains documented, but is not a gate on this accepted application step.
+
+Standalone browser QA: `qa/application-qa.md`. Current result: pass for the scoped standalone web client; physical-device installation/GPS/keyboard and server notification delivery remain unverified or unimplemented as documented.
+
+---
+
 # Design QA — Смотри на небо.
 
 Checked 2026-09-05, Europe/Samara. Initial implementation review below: passed.
@@ -58,6 +66,6 @@ The requested true resolution increase remains unresolved: tool outputs stayed a
 - [x] Domain checks, production build and runtime integrity checked.
 - [x] Final side-by-side evidence and limitations recorded.
 
-final result: blocked
+Historical Moon refinement result: native resolution increase not achieved
 
 Remaining blocker: requested higher native background resolution was not produced; all other requested visual edits are applied.

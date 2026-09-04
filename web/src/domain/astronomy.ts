@@ -48,7 +48,7 @@ function oppositions(start: number, end: number): Candidate[] {
         kind: 'opposition', key: `opposition-${planet.body}`, body: planet.body,
         peak, from: peak - DAY, to: peak + DAY,
         title: `${planet.name} в противостоянии`, subtitle: 'Планетное событие',
-        description: 'Планета находится напротив Солнца на земном небе. Это удобный период для наблюдений в течение ночи.',
+        description: 'Планета находится на противоположной от Солнца стороне неба. Её удобно наблюдать ночью.',
         equipmentDetail: planet.body === Body.Saturn
           ? 'Сам Сатурн виден без оптики как яркая точка. Чтобы различить кольца, нужен телескоп.'
           : 'Планета видна невооружённым глазом как яркая точка. Детали диска различимы в телескоп.',
@@ -68,7 +68,7 @@ function lunarEclipses(start: number, end: number): Candidate[] {
       kind: 'lunar-eclipse', key: 'lunar-eclipse', body: Body.Moon,
       peak, from: peak - eclipse.sd_partial * 60_000, to: peak + eclipse.sd_partial * 60_000,
       title: 'Лунное затмение', subtitle: 'Затмение Луны',
-      description: 'Луна проходит через земную тень. Указано только то окно теневой фазы, когда Луна достаточно высоко над вашим горизонтом и небо тёмное. Полная фаза может быть видна не целиком.',
+      description: 'Луна проходит через тень Земли. Здесь указано время, когда затмение видно над вашим горизонтом в тёмном небе. Полная фаза может быть видна не целиком.',
       equipmentDetail: 'Затмение Луны можно наблюдать невооружённым глазом. Бинокль позволит рассмотреть подробности.',
     });
     eclipse = NextLunarEclipse(eclipse.peak);

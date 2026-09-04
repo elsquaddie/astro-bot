@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Bell, BookmarkSimple, CalendarStar, CaretRight, MapPin, Planet } from '@phosphor-icons/react';
 import '@fontsource/manrope/latin-300.css';
 import '@fontsource/manrope/cyrillic-300.css';
@@ -17,7 +17,7 @@ import { EventDetails } from './components/EventDetails';
 import { EventList, SavedList } from './components/EventLists';
 
 type Tab = 'today' | 'events' | 'saved';
-export default function Prototype() {
+export default function Prototype({ tools }: { tools?: ReactNode }) {
   const [place, setPlace] = useState<Place | null>(readPlace);
   const [tab, setTab] = useState<Tab>('today');
   const [locationOpen, setLocationOpen] = useState(false);
@@ -53,11 +53,11 @@ export default function Prototype() {
 
     {tab === 'today' && <>
       <section className={`hero ${!event ? 'hero-status' : ''}`} aria-live="polite">
-        {!place ? <><p className="eyebrow">Место наблюдения</p><h1>Где смотрим?</h1><p className="hero-subtitle">Выберите город, чтобы узнать,<br />что и когда будет видно.</p><Button variant="secondary" onClick={() => setLocationOpen(true)}>Выбрать город<CaretRight size={19} /></Button></>
-          : loading ? <><p className="eyebrow">{place.name}</p><h1>Считаем<br />события<span className="loading-dot">.</span></h1><p className="hero-subtitle">С учётом вашего горизонта.</p></>
+        {!place ? <><h1>Где смотрим?</h1><p className="hero-subtitle">Выберите город. Покажем ближайшие события.</p><Button variant="secondary" onClick={() => setLocationOpen(true)}>Выбрать город<CaretRight size={19} /></Button></>
+          : loading ? <><p className="eyebrow">{place.name}</p><h1>Считаем<br />события<span className="loading-dot">.</span></h1></>
           : error ? <><h1>Не получилось</h1><p className="hero-subtitle">{error}</p><Button variant="secondary" onClick={retry}>Повторить</Button></>
           : event ? <><p className="eyebrow">Ближайшее событие</p><button className="hero-event" onClick={() => setDetail(event)} aria-label={`Подробнее: ${event.title}`}><h1>{event.title}</h1></button><button className="detail-link" onClick={() => setDetail(event)}>Где и как смотреть<CaretRight size={15} /></button></>
-          : <><p className="eyebrow">{place.name}</p><h1>Нет событий<br />в каталоге</h1><p className="hero-subtitle">В ближайший год нет подходящего окна наблюдения для этих типов событий.</p><Button variant="secondary" onClick={() => setLocationOpen(true)}>Выбрать другое место</Button></>}
+          : <><p className="eyebrow">{place.name}</p><h1>Нет событий<br />в каталоге</h1><p className="hero-subtitle">Для этого места нет видимых событий из нашего каталога на ближайший год.</p><Button variant="secondary" onClick={() => setLocationOpen(true)}>Выбрать другое место</Button></>}
       </section>
       {event && place && !loading && <section className="observation-actions">
         <div className="observation-meta"><div><span>Когда</span><strong>{dateLabel(event.best, place)}</strong><small>{timeLabel(event.best, place)}</small></div>
@@ -66,7 +66,7 @@ export default function Prototype() {
       </section>}
     </>}
     {tab === 'events' && <EventList events={events} place={place} loading={loading} error={error} onRetry={retry} onSelect={setDetail} onLocate={() => setLocationOpen(true)} />}
-    {tab === 'saved' && <SavedList plans={plans} onSelect={setReminder} onBrowse={() => setTab('events')} />}
+    {tab === 'saved' && <SavedList plans={plans} onSelect={setReminder} onBrowse={() => setTab('events')} tools={tools} />}
     {storageError && <p className="storage-message" role="status">{storageError}</p>}
     <nav className="sky-nav" aria-label="Главная навигация">
       {([{ id: 'today', label: 'Сегодня', Icon: CalendarStar }, { id: 'events', label: 'События', Icon: Planet }, { id: 'saved', label: 'Сохранено', Icon: BookmarkSimple }] as const).map(({ id, label, Icon }) =>

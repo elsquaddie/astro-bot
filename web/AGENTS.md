@@ -8,6 +8,14 @@
 - Real nearest observable event in the center; date, equipment explanation and «Напомнить мне» above Today/Events/Saved navigation. Do not freeze the mock's Draconids/date or pretend the city was detected.
 - Keep app-scoped `overflow: clip` on the phone viewport: animated dialog autofocus otherwise scrolls the entire phone and exposes its offscreen keyboard. Keep list/sheet body scrolling intact. Verify city-button click with the search keyboard open.
 
+## Standalone application
+
+- User accepted visuals and requested a real application on 2026-09-05. `application/`, `src/application/` and `vite.application.config.ts` provide a separate installable web entry. Keep the protected preview available.
+- Apply humanizer-ru editorial principles: short, concrete Russian. No filler, category subtitles or calendar downloads. Do not offer a reminder lead time while notification delivery is disconnected. Preserve «Напомнить мне» as the approved main action; its sheet explains the current limitation before saving.
+- `npm run build:app` and `npm run start:app` serve the standalone production bundle at port 8876. Preview remains on 8875. The standalone build aliases `../platform` to native controls; keep this boundary explicit.
+- Precache must include the astronomy worker and local fonts. Test fresh launch and place recalculation with the local server stopped. Every controlled window must reload after an accepted service-worker update.
+- Only local assets are cached. New city search requires internet. Do not store secrets or cache third-party geocoding responses.
+
 ## Prototype Instructions
 
 In ChatGPT Work Mode, run `sites-preview start "$PWD"`, open `http://terminal.local:4173/` in the cloud browser, and verify the rendered app and its primary interactions. Keep that preview open and tell the user to inspect it in the cloud browser; do not present the local URL as a user-facing chat link. In Codex Desktop, run the local server yourself, open the preview in the in-app browser, and provide the clickable local URL. Do not deploy to Sites unless the user explicitly asks to share, publish, or deploy. Do not give the user server-start instructions when you can run it.

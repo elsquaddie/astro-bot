@@ -4,7 +4,7 @@ Selected asset: `../public/assets/sky-night-moon.png` (853 × 1844 pixels).
 
 Generated with the built-in imagegen tool, using `approved-source.png`. Selected output: `exec-97940611-7b80-4f98-b556-379b189ddd69.png`. The original remains in Codex generated images. This restores the decorative Moon and richer stars requested by the user; it is artwork, not a live Moon-phase chart.
 
-The tool did not honor the larger canvas size. Both a targeted upscale and a new-generation attempt also retained the smaller dimensions. No claim of genuine higher resolution is made. Local 2× interpolation was offered to the user as a separate choice; it is pending, not silently applied.
+The tool did not honor the larger canvas size. Both a targeted upscale and a new-generation attempt also retained the smaller dimensions. No claim of genuine higher resolution is made. Local 2× interpolation was offered to the user as a separate choice; it was not applied. The user subsequently accepted the visual direction and requested the application on 2026-09-05; no further asset change was made.
 
 The app places the artwork below its 55px status-bar region so the Moon does not overlap the location label. The rest of the header, event and navigation layout is preserved.
 
