@@ -1,7 +1,6 @@
 name: Astronomy reminders
 on:
-  schedule:
-    - cron: '3,8,13,18,23,28,33,38,43,48,53,58 * * * *'
+  # Automatic delivery runs on Selectel. This is a manual recovery action only.
   workflow_dispatch:
 permissions: {}
 concurrency:
