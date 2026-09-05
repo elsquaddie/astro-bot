@@ -44,7 +44,7 @@ test('canonical event ignores forged dates, chat IDs and text', () => {
 });
 test('API persists, isolates users, updates same event and cancels only owner', async () => {
   const env=environment();
-  await dispatch(env);
+  await dispatch(env,Date.now(),undefined,true);
   const event=calculateEvents(place,new Date(),30).find(e=>Date.parse(e.best)>Date.now()+86400000)!;
   const request=(user:number,body?:any)=>new Request('https://sky.example/api/reminders',{method:body?'POST':'GET',headers:{'X-Telegram-Init-Data':signed(user)},body:body?JSON.stringify(body):undefined});
   const input={place,eventId:event.id,leadMinutes:60,chat_id:999};
@@ -65,7 +65,7 @@ test('concurrent dispatchers claim once and report healthy only after heartbeat'
   const env=environment(), now=Date.now(); queued(env,now); let messages=0;
   assert.equal(await dispatcherReady(env,now),false);
   const send=async (_url:string, options:any)=>{ messages++; assert.equal(JSON.parse(options.body).chat_id,123); return Response.json({ok:true,result:{message_id:10}}); };
-  await Promise.all([dispatch(env,now,send),dispatch(env,now,send)]);
+  await Promise.all([dispatch(env,now,send,true),dispatch(env,now,send,true)]);
   assert.equal(messages,1); assert.equal(env.DB.raw.prepare('SELECT status FROM reminders').get()?.status,'sent');
   assert.equal(await dispatcherReady(env,now),true); assert.equal(await dispatcherReady(env,now+3600001),false);
 });
@@ -115,29 +115,45 @@ test('active reminders remain visible after more than 200 historical reminders',
   assert.equal(result.reminders.length,200); assert.equal(result.reminders[0].id,'active');
 });
 
-test('delivery test uses the authenticated user and real queue, is throttled and isolated from event plans', async () => {
-  const env=environment();
+test('delivery test sends immediately to its owner without draining other reminders or enabling scheduler health', async () => {
+  const env=environment(); queued(env,Date.now(),'other-due');
   const request=()=>new Request('https://sky.example/api/reminders',{method:'POST',headers:{'X-Telegram-Init-Data':signed()},body:JSON.stringify({action:'test',chat_id:999})});
-  const result=await reminderApi(request(),env);
-  assert.equal(result.status,'pending');
-  await assert.rejects(reminderApi(request(),env),/Проверка уже запущена/);
-  await dispatch(env,result.dueAt-1,async()=>{assert.fail('Must not send early');});
   let count=0;
-  await dispatch(env,result.dueAt,async(_url:string,options:any)=>{count++;const body=JSON.parse(options.body);assert.equal(body.chat_id,123);assert.match(body.text,/Проверка напоминаний/);return Response.json({ok:true,result:{message_id:456}});});
-  assert.equal(count,1);
+  const send=async(_url:string,options:any)=>{count++;const body=JSON.parse(options.body);assert.equal(body.chat_id,123);assert.match(body.text,/Проверка напоминаний/);return Response.json({ok:true,result:{message_id:456}});};
+  const result=await reminderApi(request(),env,send);
+  assert.equal(result.status,'sent'); assert.equal(count,1);
+  assert.equal(env.DB.raw.prepare("SELECT status FROM reminders WHERE id='other-due'").get()?.status,'pending');
+  assert.equal(await dispatcherReady(env),false);
+  await assert.rejects(reminderApi(request(),env,send),/Проверка уже запущена/); assert.equal(count,1);
   const own=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed()}}),env);
-  assert.equal(own.reminders.length,0); assert.equal(own.deliveryTest.status,'sent');
+  assert.equal(own.reminders.length,1); assert.equal(own.deliveryTest.status,'sent');
   const other=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed(999)}}),env);
   assert.equal(other.deliveryTest,null);
-  await dispatch(env,result.dueAt+1000,async()=>{assert.fail('Must not resend');});
+});
+test('failed immediate test reports failure, not confirmation', async () => {
+  const env=environment();
+  const request=new Request('https://sky.example/api/reminders',{method:'POST',headers:{'X-Telegram-Init-Data':signed()},body:'{"action":"test"}'});
+  const result=await reminderApi(request,env,async()=>Response.json({ok:false,error_code:403}));
+  assert.equal(result.status,'failed'); assert.equal(await dispatcherReady(env),false);
+});
+test('legacy queued test expires even when dispatcher never runs', async () => {
+  const env=environment(); queued(env,Date.now()-3600000,'old-test');
+  env.DB.raw.prepare("UPDATE reminders SET end_at=?,event_key='delivery-test:older',payload='{\"deliveryTest\":true}' WHERE id='old-test'").run(Date.now()-1);
+  const own=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed()}}),env);
+  assert.equal(own.deliveryTest.status,'expired'); assert.equal(own.reminders.length,0);
+});
+test('manual queue run does not claim the automatic timer works', async () => {
+  const env=environment(); await dispatch(env); assert.equal(await dispatcherReady(env),false);
+  await dispatch(env,Date.now(),undefined,true); assert.equal(await dispatcherReady(env),true);
 });
 
-test('test expiry is visible and retryable even when dispatcher never runs', async () => {
-  const env=environment();
-  const request=()=>new Request('https://sky.example/api/reminders',{method:'POST',headers:{'X-Telegram-Init-Data':signed()},body:'{"action":"test"}'});
-  const item=await reminderApi(request(),env);
-  env.DB.raw.prepare("UPDATE reminders SET end_at=?,created_at=?,event_key='delivery-test:older' WHERE id=?").run(Date.now()-1,Date.now()-1800001,item.id);
-  const own=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed()}}),env);
-  assert.equal(own.deliveryTest.status,'expired');
-  assert.equal((await reminderApi(request(),env)).status,'pending');
+test('immediate test uncertainty and rate limits never stay in a waiting state', async () => {
+  for (const response of ['network',429,500] as const) {
+    const env=environment();
+    const request=new Request('https://sky.example/api/reminders',{method:'POST',headers:{'X-Telegram-Init-Data':signed()},body:'{"action":"test"}'});
+    const result=await reminderApi(request,env,async()=>{if(response==='network') throw new Error('timeout');return Response.json({ok:false,error_code:response});});
+    assert.equal(result.status,response==='network'?'uncertain':'failed');
+    assert.equal(await dispatcherReady(env),false);
+    await dispatch(env,Date.now()+600000,async()=>{assert.fail('Failed immediate test must not be resent automatically');});
+  }
 });

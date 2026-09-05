@@ -217,3 +217,7 @@
 .sky-compass .sky-button { width: 100%; }
 
 .delivery-test { display: grid; gap: 12px; border-top: 1px solid #ffffff21; padding-top: 20px; }
+
+.reminder-confirmation { display: grid; gap: 10px; padding: 18px; border: 1px solid #969bff66; border-radius: 14px; background: #969bff13; }
+.reminder-confirmation > svg { color: #bce5ca; }
+.reminder-confirmation strong { font-size: 18px; font-weight: 500; }

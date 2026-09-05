@@ -1,7 +1,7 @@
 import { calculateEvents } from '../src/domain/astronomy.ts';
 import { validPlace } from '../src/domain/storage.ts';
 import { ApiError, telegramUser } from './auth.mjs';
-import { dispatcherReady } from './queue.mjs';
+import { dispatcherReady, dispatch } from './queue.mjs';
 const DAY = 86400000;
 export function canonicalPlan(input, now = Date.now()) {
   const place = input?.place;
@@ -20,7 +20,7 @@ export function canonicalPlan(input, now = Date.now()) {
   return { plan: { event, place: cleanPlace, leadMinutes: input.leadMinutes }, dueAt,
     key: `${id}:${place.latitude.toFixed(4)}:${place.longitude.toFixed(4)}` };
 }
-export async function reminderApi(request, env) {
+export async function reminderApi(request, env, send = fetch) {
   if (!env.DB) throw new ApiError(503, 'Напоминания временно недоступны.');
   const user = await telegramUser(request.headers.get('X-Telegram-Init-Data'), env.BOT_TOKEN);
   if (request.method === 'GET') {
@@ -39,13 +39,15 @@ export async function reminderApi(request, env) {
     return { ok: true };
   }
   if (input?.action === 'test') {
-    const now = Date.now(), dueAt = now + 60_000;
+    const now = Date.now(), dueAt = now;
     // One pending test per user and no more than one new test per five minutes.
     const id = crypto.randomUUID(), key = `delivery-test:${Math.floor(now / 300_000)}`;
     const inserted = await env.DB.prepare("INSERT INTO reminders (id,user_id,event_key,payload,due_at,end_at,status,attempts,retry_at,created_at) SELECT ?,?,?,'{\"deliveryTest\":true}',?,?,'pending',0,?,? WHERE NOT EXISTS (SELECT 1 FROM reminders WHERE user_id=? AND event_key LIKE 'delivery-test:%' AND (status='sending' OR (status='pending' AND end_at > ?) OR created_at > ?)) ON CONFLICT(user_id,event_key) DO NOTHING RETURNING id")
       .bind(id,user,key,dueAt,now+1800000,dueAt,now,user,now,now-300000).first();
     if (!inserted) throw new ApiError(429, 'Проверка уже запущена. Дождитесь сообщения или попробуйте через пять минут.');
-    return { id, status: 'pending', dueAt };
+    await dispatch(env, now, send, false, id);
+    const result = await env.DB.prepare('SELECT status FROM reminders WHERE id=? AND user_id=?').bind(id,user).first();
+    return { id, status: result.status, dueAt };
   }
   if (!await dispatcherReady(env)) throw new ApiError(503, 'Доставка напоминаний временно недоступна. Попробуйте позже.');
   const { plan, key, dueAt } = canonicalPlan(input);

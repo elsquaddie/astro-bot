@@ -24,7 +24,7 @@ export default {
     if (url.pathname === '/api/reminders/dispatch') {
       if (request.method !== 'POST' || !env.REMINDER_DISPATCH_SECRET || request.headers.get('Authorization') !== `Bearer ${env.REMINDER_DISPATCH_SECRET}`)
         return json({ error: 'unauthorized' }, 401);
-      try { return json(await dispatch(env)); } catch { return json({ error: 'dispatch_failed' }, 500); }
+      try { return json(await dispatch(env, Date.now(), fetch, request.headers.get('X-Dispatch-Trigger') === 'schedule')); } catch { return json({ error: 'dispatch_failed' }, 500); }
     }
     if (url.pathname === '/api/telegram/webhook') {
       if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
