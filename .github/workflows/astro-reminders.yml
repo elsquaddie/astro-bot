@@ -1,0 +1,23 @@
+name: Astronomy reminders
+on:
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: astro-reminder-dispatch
+  cancel-in-progress: false
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Send due reminders
+        env:
+          DISPATCH_SECRET: ${{ secrets.ASTRO_REMINDER_DISPATCH_SECRET }}
+        run: |
+          test -n "$DISPATCH_SECRET"
+          curl --fail-with-body --silent --show-error --max-time 180 \
+            --request POST \
+            --header "Authorization: Bearer $DISPATCH_SECRET" \
+            'https://smotri-na-nebo.vektordaniil1.chatgpt.site/api/reminders/dispatch'

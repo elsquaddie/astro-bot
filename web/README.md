@@ -23,13 +23,13 @@ npm run check:runtime
 
 ## Что работает
 
-- Выбор города, поиск через Open-Meteo на русском, геолокация только после нажатия. Координаты используются локально; при поиске провайдер получает название города.
+- Выбор города, поиск через Open-Meteo на русском, геолокация только после нажатия. Расчёт на экране идёт локально. При создании напоминания выбранное место сохраняется на сервере приложения; при поиске провайдер получает название города.
 - Ближайшее подходящее окно наблюдения, дата, местное время, направление и пояснение об оптике.
 - Динамический каталог следующих 365 дней: четверти/полнолуния, сближения Луны с Венерой, Марсом, Юпитером и Сатурном, противостояния внешних ярких планет, теневые лунные затмения.
-- Сохранение событий на устройстве. Скачивание календаря и неработающий выбор времени напоминания убраны по согласованному направлению интерфейса.
+- Локальное сохранение в браузере; серверные напоминания внутри Telegram при доступной доставке. Скачивания календаря нет.
 - Состояния первого запуска, расчёта, ошибок, пустого каталога и пустого сохранённого списка.
 
-Сохранение не отправляет уведомления. Это прямо указано в окне события. Telegram и фоновая доставка напоминаний пока не подключены. Существующий модуль ICS сохранён в исходниках и тестах, но не используется интерфейсом.
+Локальное сохранение не отправляет уведомления. В Telegram доступна серверная очередь напоминаний; создание включается только при работающем таймере. Существующий модуль ICS сохранён в исходниках и тестах, но не используется интерфейсом.
 
 ## Откуда берутся события
 
@@ -59,7 +59,7 @@ npm run check:runtime
 
 UI: локальные Manrope 300/400/500 с кириллицей, Phosphor Light, Radix Dialog для нижних окон и редактируемая кнопка на Radix Slot/cva по принципу shadcn/ui. Это небольшая собственная тема компонентов, а не установленный целиком сторонний визуальный kit. Фон и знак созданы из согласованного концепта.
 
-Следующий серверный этап: общий каталог для веба и бота, привязка пользователя Telegram и доставка напоминаний с повторными попытками. Токены бота и секреты не должны попадать в браузер.
+Браузер и сервер используют общий расчёт Astronomy Engine. Сервер проверяет подпись Telegram и сохраняет напоминания в D1. Токены бота и секреты не должны попадать в браузер.
 
 ## Основания для PWA
 
@@ -72,5 +72,13 @@ UI: локальные Manrope 300/400/500 с кириллицей, Phosphor Lig
 - `/start` и `/help` в личном чате возвращают кнопку Mini App. Обработчик проверяет секрет Telegram webhook; сообщение отправляется только в исходный личный чат.
 - SDK Telegram загружается только при запуске из Telegram; приложение учитывает безопасные отступы и скрывает установку PWA.
 - Токен бота остаётся в локальном `.env`, не входит в публикацию. Worker использует `TELEGRAM_WEBHOOK_SECRET` и `TELEGRAM_APP_URL` из секретов/настроек Sites.
-- `/api/health` показывает возможности опубликованной версии. Серверных таймеров в этой публикации нет: сохранение остаётся локальным, отложенные уведомления не включены. Для них нужен отдельный планировщик, очередь и проверка Telegram initData перед созданием подписки.
+- `/api/health` показывает возможности опубликованной версии. Готовность доставки требует runtime-секреты, D1 и запуск диспетчера за последний час. Подготовленный GitHub Actions workflow нуждается в отдельном подключении; его наличие в коде не подтверждает доставку.
 - Источник протокола: https://core.telegram.org/bots/webapps и https://core.telegram.org/bots/api.
+
+### Reminder runtime
+
+`POST /api/reminders` checks the signed Telegram initData header, recalculates the canonical event, and persists the selected place in D1. The app asks for permission to receive bot messages. GET and cancellation are owner-scoped; active records precede bounded history. Outside Telegram the app only saves locally.
+
+`POST /api/reminders/dispatch` requires a dedicated Bearer secret. `.github/workflows/astro-reminders.yml` is a five-minute timer intended for GitHub main, with repository secret `ASTRO_REMINDER_DISPATCH_SECRET` matching the Sites runtime `REMINDER_DISPATCH_SECRET`. Verify an actual workflow run and `/api/health`; a YAML file alone is not an active scheduler. GitHub schedules may be delayed.
+
+The queue atomically rechecks due time when claiming. Telegram 429/5xx responses retry at most three times. Ambiguous network failures become `uncertain` without blind resend. Ended observation windows expire. Schema changes are generated from `db/schema.ts` with drizzle-kit; deployed migrations are immutable. Queue tests use in-memory SQLite only (Node.js 22.13+).

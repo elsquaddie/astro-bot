@@ -2,6 +2,7 @@ import { Bell } from '@phosphor-icons/react';
 import { BottomSheet } from '../platform';
 import { dateLabel, direction, timeLabel, windowLabel } from '../domain/format';
 import type { Place, SkyEvent } from '../domain/types';
+import { ViewingGuide } from './ViewingGuide';
 import { Button } from './Button';
 
 export function EventDetails({ event, place, onClose, onRemind }: {
@@ -18,6 +19,7 @@ export function EventDetails({ event, place, onClose, onRemind }: {
         <div><dt>Как смотреть</dt><dd>{event.equipmentDetail}</dd></div>
         <div><dt>Место</dt><dd>{place.name}<small>{place.latitude.toFixed(2)}°, {place.longitude.toFixed(2)}° · {place.timezone}</small></dd></div>
       </dl>
+      <ViewingGuide event={event} />
       <Button onClick={onRemind}><Bell size={21} weight="light" />Напомнить мне</Button>
       <details className="calculation-details"><summary>Как рассчитано</summary>
         <p>Глобальный момент события: {dateLabel(event.peak, place, true)}, {timeLabel(event.peak, place)}. Время наблюдения может отличаться.</p>

@@ -1,3 +1,6 @@
+import { ApiError } from './auth.mjs';
+import { reminderApi } from './reminders.mjs';
+import { dispatch, dispatcherReady } from './queue.mjs';
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 
 export function telegramReply(update, appUrl) {
@@ -13,7 +16,16 @@ export function telegramReply(update, appUrl) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/api/health') return json({ ok: true, app: 'smotri-na-nebo', telegram: 'mini-app', reminders: false });
+    if (url.pathname === '/api/health') return json({ ok: true, app: 'smotri-na-nebo', telegram: 'mini-app', reminders: await dispatcherReady(env) });
+    if (url.pathname === '/api/reminders') {
+      try { return json(await reminderApi(request, env)); }
+      catch (error) { return json({ error: error instanceof ApiError ? error.message : 'Не удалось сохранить напоминание.' }, error instanceof ApiError ? error.status : 500); }
+    }
+    if (url.pathname === '/api/reminders/dispatch') {
+      if (request.method !== 'POST' || !env.REMINDER_DISPATCH_SECRET || request.headers.get('Authorization') !== `Bearer ${env.REMINDER_DISPATCH_SECRET}`)
+        return json({ error: 'unauthorized' }, 401);
+      try { return json(await dispatch(env)); } catch { return json({ error: 'dispatch_failed' }, 500); }
+    }
     if (url.pathname === '/api/telegram/webhook') {
       if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
       if (!env.TELEGRAM_WEBHOOK_SECRET || request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== env.TELEGRAM_WEBHOOK_SECRET)
@@ -26,7 +38,7 @@ export default {
       const appUrl = env.TELEGRAM_APP_URL;
       if (!appUrl || !appUrl.startsWith('https://')) return json({ error: 'not_configured' }, 503);
       // Telegram executes this Bot API method as the webhook response. No bot token
-      // enters the browser or this worker, and only the originating private chat is used.
+      // enters the browser, and only the originating private chat is used.
       return json(telegramReply(update, appUrl));
     }
     if (url.pathname.startsWith('/api/')) return json({ error: 'not_found' }, 404);

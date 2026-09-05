@@ -88,4 +88,6 @@ When any text-entry control loses focus, dismiss the simulated keyboard. If the 
 
 ## Telegram launch
 
-User authorized publishing @astro_timing_bot on 2026-09-05. Sites project ID is persisted in .openai/hosting.json; reuse it. Build with build:telegram, package dist-telegram as dist. Keep bot token out of source/archive/browser; webhook secret is runtime-only. Worker replies to authenticated private /start and /help updates. Never claim timed reminders: launch release has no scheduler. Existing Python bot is not running alongside the webhook.
+User authorized publishing @astro_timing_bot on 2026-09-05. Sites project ID is persisted in .openai/hosting.json; reuse it. Build with build:telegram, package dist-telegram as dist. Keep bot token out of source/archive/browser; secrets are runtime-only. Worker replies to authenticated private /start and /help updates. D1 reminders require Telegram initData and a recent dispatcher heartbeat. The prepared GitHub Actions timer requires explicit setup; YAML alone does not establish delivery. Existing Python bot is not running alongside the webhook.
+
+Use native Telegram location where supported, with manual city fallback. Explain altitude with an arm-length fist and compass bearing for the stated observing time. Bot avatar and favicon use the existing open-ring mark. A requested server reminder stores the selected place; disclose this in its confirmation sheet.

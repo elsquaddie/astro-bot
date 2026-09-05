@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 
 interface TelegramApp {
+  isVersionAtLeast(version: string): boolean;
+  requestWriteAccess(callback: (granted: boolean) => void): void;
+  LocationManager?: {
+    isInited: boolean; isLocationAvailable: boolean; isAccessRequested: boolean; isAccessGranted: boolean;
+    init(callback: () => void): void;
+    getLocation(callback: (location: { latitude: number; longitude: number } | null) => void): void;
+    openSettings(): void;
+  };
   initData: string;
   ready(): void;
   expand(): void;
@@ -30,7 +38,7 @@ export function useTelegram() {
       if (!active) return;
       app = window.Telegram?.WebApp;
       if (!app?.initData) return;
-      setInside(true); app.ready(); app.expand();
+      setInside(true); window.dispatchEvent(new Event('telegram-ready')); app.ready(); app.expand();
       app.setHeaderColor('#020611'); app.setBackgroundColor('#020611');
       insets(); app.onEvent('safeAreaChanged', insets); app.onEvent('contentSafeAreaChanged', insets);
     };

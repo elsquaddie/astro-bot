@@ -1,4 +1,5 @@
-import { mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { build } from 'vite';
+import { mkdirSync, copyFileSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
 import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const dest = resolve(root, 'dist-telegram');
@@ -12,6 +13,8 @@ for (const file of [...paths, '/sw.js']) {
   mkdirSync(resolve(target, '..'), { recursive: true });
   copyFileSync(root + '/dist-app' + file, target);
 }
-copyFileSync(root + '/telegram-server/index.mjs', dest + '/server/index.js');
+await build({ configFile: false, publicDir: false, build: { ssr: root + '/telegram-server/index.mjs', outDir: dest + '/server', emptyOutDir: false,
+  rolldownOptions: { output: { entryFileNames: 'index.js' } } }, ssr: { noExternal: true } });
+cpSync(root + '/drizzle', dest + '/.openai/drizzle', { recursive: true });
 writeFileSync(dest + '/.openai/hosting.json', readFileSync(root + '/.openai/hosting.json'));
 console.log('Telegram build prepared');

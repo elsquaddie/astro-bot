@@ -11,16 +11,16 @@ export default defineConfig({
   plugins: [react(), {
     name: 'standalone-application',
     generateBundle() {
-      for (const file of ['sky-night-moon.png', 'brand-mark.png']) {
+      for (const file of ['sky-night-moon.png', 'brand-mark.png', 'app-icon-192.png', 'app-icon-512.png']) {
         this.emitFile({ type: 'asset', fileName: `assets/${file}`, source: readFileSync(resolve(root, 'public/assets', file)) });
       }
-      const image = readFileSync(resolve(root, 'public/assets/brand-mark.png')).toString('base64');
-      this.emitFile({ type: 'asset', fileName: 'app-icon.svg', source: `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#10182b"/><image x="40" y="40" width="432" height="432" href="data:image/png;base64,${image}"/></svg>` });
+      this.emitFile({ type: 'asset', fileName: 'app-icon.svg', source: readFileSync(resolve(root, 'public/assets/app-mark.svg')) });
       this.emitFile({ type: 'asset', fileName: 'manifest.webmanifest', source: JSON.stringify({
         id: '/', name: 'Смотри на небо.', short_name: 'Смотри на небо.', lang: 'ru', start_url: '/', scope: '/',
         display: 'standalone', background_color: '#020611', theme_color: '#020611',
         icons: [{ src: '/app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: '/assets/brand-mark.png', sizes: '1254x1254', type: 'image/png', purpose: 'any' }],
+          { src: '/assets/app-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/assets/app-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }],
       }, null, 2) });
     },
     writeBundle(options, bundle) {

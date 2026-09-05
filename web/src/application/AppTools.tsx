@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DownloadSimple } from '@phosphor-icons/react';
+import { RemindersProvider } from './reminders';
 import { useTelegram } from './telegram';
 import Prototype from '../Prototype';
 import { Button } from '../components/Button';
@@ -48,10 +49,10 @@ export function Application() {
   function refresh() {
     update?.postMessage({ type: 'ACTIVATE_UPDATE' });
   }
-  return <Prototype tools={<aside className="app-tools" aria-label="Приложение">
+  return <RemindersProvider inside={insideTelegram}><Prototype tools={<aside className="app-tools" aria-label="Приложение">
     {!installed && !insideTelegram && <Button variant="secondary" onClick={install}><DownloadSimple size={20} />Установить приложение</Button>}
     {update && <Button variant="secondary" onClick={refresh}>Обновить приложение</Button>}
     <p className="sky-note" role="status">{offline ? 'Без сети. Поиск новых городов недоступен.' : ready ? 'События и сохранённое доступны без сети.' : ''}</p>
     {help && <p className="sky-note" role="status">{help}</p>}
-  </aside>} />;
+  </aside>} /></RemindersProvider>;
 }
