@@ -10,6 +10,11 @@ interface TelegramApp {
     getLocation(callback: (location: { latitude: number; longitude: number } | null) => void): void;
     openSettings(): void;
   };
+  DeviceOrientation?: {
+    isStarted: boolean; absolute: boolean; alpha: number | null; beta: number | null; gamma: number | null;
+    start(params: { refresh_rate: number; need_absolute: boolean }, callback?: (started: boolean) => void): void;
+    stop(): void;
+  };
   initData: string;
   ready(): void;
   expand(): void;

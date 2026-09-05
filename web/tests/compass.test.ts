@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { compassHeading, turnTo } from '../src/domain/compass';
+import { trackCompass } from '../src/application/compass';
+test('compass converts Telegram radians and handles north crossing and tilted phone', () => {
+  assert.equal(compassHeading(true,0,0,0),0);
+  assert.equal(compassHeading(true,-Math.PI/2,0,0),90);
+  assert.equal(compassHeading(true,Math.PI/2,0,0),270);
+  assert.equal(compassHeading(true,0,0,0,90),90);
+  assert.equal(turnTo(5,355),10); assert.equal(turnTo(355,5),-10);
+  assert.equal(compassHeading(false,0,0,0),null);
+  assert.equal(compassHeading(true,null,0,0),null);
+  assert.equal(compassHeading(true,0,Math.PI/2,0),null);
+});
+test('relative or stale sensor data never appears as north; cleanup stops tracking', t => {
+  t.mock.timers.enable({apis:['setTimeout']});
+  const events = new Map<string,()=>void>(), readings:any[]=[];
+  let stopped=0;
+  const sensor={absolute:true,alpha:-Math.PI/2,beta:0,gamma:0,start(params:any){assert.equal(params.need_absolute,true);},stop(){stopped++;}};
+  const oldWindow=Object.getOwnPropertyDescriptor(globalThis,'window'), oldDocument=Object.getOwnPropertyDescriptor(globalThis,'document');
+  Object.defineProperty(globalThis,'window',{configurable:true,value:{Telegram:{WebApp:{initData:'test',isVersionAtLeast:()=>true,DeviceOrientation:sensor,onEvent:(n:string,cb:()=>void)=>events.set(n,cb),offEvent:(n:string)=>events.delete(n)}}}});
+  Object.defineProperty(globalThis,'document',{configurable:true,value:{addEventListener(){},removeEventListener(){}}});
+  t.after(()=>{Object.defineProperty(globalThis,'window',oldWindow ?? {value:undefined,configurable:true});Object.defineProperty(globalThis,'document',oldDocument ?? {value:undefined,configurable:true});});
+  const stop=trackCompass(r=>readings.push(r)); events.get('deviceOrientationChanged')?.();
+  assert.equal(readings.at(-1).heading,90);
+  t.mock.timers.tick(5001); assert.equal(readings.at(-1).state,'unavailable'); assert.equal(readings.at(-1).heading,null);
+  stop(); assert.equal(stopped,1); assert.equal(events.size,0);
+  trackCompass(r=>readings.push(r)); sensor.absolute=false; events.get('deviceOrientationChanged')?.();
+  assert.equal(readings.at(-1).state,'unavailable'); assert.equal(events.size,0);
+});

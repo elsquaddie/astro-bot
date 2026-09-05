@@ -12,30 +12,61 @@ export function coordinatesToPlace(latitude: number, longitude: number): Place {
     throw new Error('Не удалось определить место. Выберите город.');
   return { name: 'Рядом со мной', latitude, longitude, timezone: tzlookup(latitude, longitude) };
 }
-export function locate(): Promise<Place> {
+export class LocationError extends Error {
+  constructor(message: string, public settings = false) { super(message); }
+}
+export function openLocationSettings() {
+  const manager = window.Telegram?.WebApp?.LocationManager;
+  if (manager?.isInited && manager.isLocationAvailable && manager.isAccessRequested && !manager.isAccessGranted)
+    manager.openSettings();
+}
+export function locate(signal?: AbortSignal): Promise<Place> {
   const app = window.Telegram?.WebApp;
   const manager = app?.initData && app.isVersionAtLeast('8.0') ? app.LocationManager : undefined;
-  if (manager) return new Promise((resolve, reject) => {
-    let finished = false;
-    const finish = (location: { latitude: number; longitude: number } | null, unavailable = false) => {
-      if (finished) return; finished = true; clearTimeout(timer);
-      if (!location) { reject(new Error(unavailable ? 'На устройстве недоступна геолокация. Выберите город.' : 'Доступ к месту не получен. Разрешите геолокацию в настройках Telegram или выберите город.')); return; }
-      try { resolve(coordinatesToPlace(location.latitude, location.longitude)); } catch (error) { reject(error); }
-    };
-    const timer = setTimeout(() => finish(null), 20_000);
-    const request = () => { if (!finished) { if (!manager.isLocationAvailable) finish(null, true); else manager.getLocation(location => finish(location)); } };
-    try { if (manager.isInited) request(); else manager.init(request); } catch { finish(null); }
-  });
+  if (signal?.aborted) return Promise.reject(new LocationError('Определение места отменено.'));
+  if (!manager) return locateWithBrowser();
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) { reject(new Error('Браузер не поддерживает геолокацию. Выберите город.')); return; }
+    let finished = false;
+    const finish = (location: { latitude: number; longitude: number } | null, error?: LocationError) => {
+      if (finished) return; finished = true; clearTimeout(timer); signal?.removeEventListener('abort', abort);
+      if (error) { reject(error); return; }
+      if (location) {
+        try { resolve(coordinatesToPlace(location.latitude, location.longitude)); } catch (error) { reject(error); }
+      } else if (manager.isAccessGranted) {
+        // Android can grant permission but return no GPS fix. Try the WebView's
+        // location provider only after access was granted, never after refusal.
+        locateWithBrowser().then(resolve, reject);
+      } else if (manager.isAccessRequested) {
+        reject(new LocationError('Telegram не дал доступ к геолокации. Проверьте разрешение для бота и для самого Telegram.', true));
+      } else reject(new LocationError('Telegram не передал местоположение. Попробуйте ещё раз или выберите город.'));
+    };
+    // Leave time for both the permission dialog and a first GPS fix.
+    const abort = () => finish(null, new LocationError('Определение места отменено.'));
+    const timer = setTimeout(() => {
+      if (manager.isAccessGranted) finish(null);
+      else finish(null, new LocationError('Не дождались местоположения. Попробуйте ещё раз или выберите город.'));
+    }, 60_000);
+    signal?.addEventListener('abort', abort, { once: true });
+    const request = () => {
+      if (finished) return;
+      if (!manager.isLocationAvailable) finish(null, new LocationError('На устройстве недоступна геолокация. Выберите город.'));
+      else { try { manager.getLocation(location => finish(location)); } catch { finish(null, new LocationError('Не удалось запросить местоположение. Попробуйте ещё раз.')); } }
+    };
+    try { if (manager.isInited) request(); else manager.init(request); }
+    catch { finish(null, new LocationError('Не удалось запросить местоположение. Попробуйте ещё раз или выберите город.')); }
+  });
+}
+export function locateWithBrowser(): Promise<Place> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new LocationError('Не удалось получить координаты. Выберите город.')); return; }
     navigator.geolocation.getCurrentPosition(position => {
       const { latitude, longitude } = position.coords;
       try { resolve(coordinatesToPlace(latitude, longitude)); }
-      catch { reject(new Error('Не удалось определить часовой пояс. Выберите город.')); }
-    }, error => reject(new Error(error.code === 1
-      ? 'Доступ к геолокации закрыт. Можно выбрать город вручную.'
-      : 'Не удалось определить местоположение. Попробуйте ещё раз или выберите город.')),
-    { timeout: 12_000, maximumAge: 300_000, enableHighAccuracy: false });
+      catch { reject(new LocationError('Не удалось определить часовой пояс. Выберите город.')); }
+    }, error => reject(new LocationError(error.code === 1
+      ? 'Доступ к геолокации закрыт в настройках устройства. Можно выбрать город вручную.'
+      : 'Координаты пока не получены. Проверьте, включена ли геолокация на телефоне, или выберите город.')),
+    { timeout: 20_000, maximumAge: 300_000, enableHighAccuracy: false });
   });
 }
 export async function searchCities(query: string, signal: AbortSignal): Promise<Place[]> {

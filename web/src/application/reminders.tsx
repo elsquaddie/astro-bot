@@ -27,13 +27,16 @@ export async function allowMessages() {
     app.requestWriteAccess(granted => { clearTimeout(timer); granted ? resolve() : reject(new Error('Разрешите боту писать вам, чтобы получать напоминания.')); });
   });
 }
+interface DeliveryTest { id: string; status: string; dueAt: number }
 interface Service {
+  deliveryTest: DeliveryTest | null; testDelivery(): Promise<void>;
   inside: boolean; available: boolean; records: RemoteReminder[]; error: string; loading: boolean;
   refresh(): Promise<void>; save(plan: SavedPlan): Promise<RemoteReminder>; cancel(id: string): Promise<void>;
 }
 const Context = createContext<Service | null>(null);
 export const useReminders = () => useContext(Context);
 export function RemindersProvider({ inside, children }: { inside: boolean; children: ReactNode }) {
+  const [deliveryTest, setDeliveryTest] = useState<DeliveryTest | null>(null);
   const [records, setRecords] = useState<RemoteReminder[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,7 +44,7 @@ export function RemindersProvider({ inside, children }: { inside: boolean; child
   async function refresh() {
     if (!window.Telegram?.WebApp?.initData) return;
     setLoading(true);
-    try { const [data, health] = await Promise.all([api('GET'), fetch('/api/health', { signal: AbortSignal.timeout(15_000) }).then(r => { if (!r.ok) throw new Error('Сервис временно недоступен.'); return r.json(); })]); setRecords(data.reminders); setAvailable(health.reminders === true); setError(''); }
+    try { const [data, health] = await Promise.all([api('GET'), fetch('/api/health', { signal: AbortSignal.timeout(15_000) }).then(r => { if (!r.ok) throw new Error('Сервис временно недоступен.'); return r.json(); })]); setRecords(data.reminders); setDeliveryTest(data.deliveryTest ?? null); setAvailable(health.reminders === true); setError(''); }
     catch (e) { setAvailable(false); setError((e as Error).message); }
     finally { setLoading(false); }
   }
@@ -53,6 +56,7 @@ export function RemindersProvider({ inside, children }: { inside: boolean; child
     document.addEventListener('visibilitychange', update);
     return () => { window.removeEventListener('telegram-ready', update); window.removeEventListener('online', update); document.removeEventListener('visibilitychange', update); };
   }, [inside]);
+  async function testDelivery() { setDeliveryTest(await api('POST', { action: 'test' })); }
   async function save(plan: SavedPlan) {
     const item = await api('POST', { eventId: plan.event.id, place: plan.place, leadMinutes: plan.leadMinutes });
     setRecords(current => [item, ...current.filter(r => r.id !== item.id)]); setError(''); return item;
@@ -61,5 +65,5 @@ export function RemindersProvider({ inside, children }: { inside: boolean; child
     await api('POST', { action: 'cancel', id });
     setRecords(current => current.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
   }
-  return <Context.Provider value={{ inside, available, records, error, loading, refresh, save, cancel }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ inside, available, deliveryTest, testDelivery, records, error, loading, refresh, save, cancel }}>{children}</Context.Provider>;
 }

@@ -95,3 +95,11 @@ Use native Telegram location where supported, with manual city fallback. Explain
 Telegram boot must not depend on a script fetched from telegram.org at runtime. Ship the official SDK locally and call ready before authentication-dependent features. Complete cached updates auto-activate so failed navigation cannot hide the repair behind an inaccessible update button. Vendor SDK is exempt from authored-module line limits.
 
 Sites redirects /index.html to /. A cached followed response must be reconstructed before serving navigation (redirect=manual); cover this with Response-based regression tests and repeat browser launches. Do not intercept /api navigation. Include the service-worker source in its cache version so worker-only fixes get an independent cache.
+
+## Location, compass and delivery checks
+
+- Keep search focus on the rounded field wrapper, never a second rectangle around its input.
+- Distinguish location denial, absent coordinates and timeout. Telegram may grant access without a GPS fix; only then use the browser provider. Cancel pending native lookup when the sheet closes.
+- Compass is opt-in, uses Telegram absolute orientation in radians, and stops on close/background/stale readings. Never treat relative readings as north. Show a clearly labelled static diagram when unavailable and keep directions tied to the event observing time. Hardware verification is separate from mocked sensor tests.
+- Calculation details use short Russian and link Astronomy Engine; preserve a plain-language catalog scope.
+- Delivery checks use authenticated users and the existing queue, with throttling. Keep their payloads separate from normal event plans. A test can expire without a running dispatcher; derive that state on read. Manual dispatcher success does not establish scheduled execution or receipt on a phone.

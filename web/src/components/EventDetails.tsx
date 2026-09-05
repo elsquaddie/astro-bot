@@ -22,9 +22,8 @@ export function EventDetails({ event, place, onClose, onRemind }: {
       <ViewingGuide event={event} />
       <Button onClick={onRemind}><Bell size={21} weight="light" />Напомнить мне</Button>
       <details className="calculation-details"><summary>Как рассчитано</summary>
-        <p>Глобальный момент события: {dateLabel(event.peak, place, true)}, {timeLabel(event.peak, place)}. Время наблюдения может отличаться.</p>
-        <p>Окно проверяется с шагом 10 минут: Солнце ниже −6°, объект выше 8°. Для сближений оба объекта должны быть над горизонтом. Погода, засветка и здания не учтены.</p>
-        <p>Каталог на следующие 365 дней: четверти и полнолуния, сближения Луны с четырьмя яркими планетами, противостояния Марса, Юпитера и Сатурна, теневые лунные затмения. Метеорные потоки и пролёты спутников пока не включены.</p>
+        <p>События Луны и планет на год вперёд рассчитаны с помощью Astronomy Engine — движка, который определяет положение Солнца, Луны и планет по дате, времени и координатам.</p>
+        <p>По этим данным выбираем время, когда у вас достаточно темно, а событие видно над горизонтом. Облака, свет фонарей и здания не учитываем.</p>
         <a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noreferrer">Источник расчётов — Astronomy Engine ↗</a>
       </details>
       <Button variant="ghost" onClick={onClose}>Закрыть</Button>

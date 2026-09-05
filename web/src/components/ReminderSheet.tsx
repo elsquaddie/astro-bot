@@ -43,6 +43,13 @@ function ReminderContent({ plan, saved, onSave, onClose }: {
       setStatus(onSave(plan) ? 'Сохранено на этом устройстве.' : 'Не удалось сохранить. Проверьте настройки браузера.');
     }
   }
+  async function testDelivery() {
+    if (!service) return;
+    setBusy(true); setStatus('');
+    try { await allowMessages(); await service.testDelivery(); setStatus('Проверка запущена. Закройте приложение — тестовое сообщение придёт в личку после ближайшего запуска доставки.'); }
+    catch (e) { setStatus((e as Error).message); }
+    finally { setBusy(false); }
+  }
   async function cancel() {
     if (!service || !record) return;
     setBusy(true);
@@ -63,7 +70,13 @@ function ReminderContent({ plan, saved, onSave, onClose }: {
       </fieldset><p className="sky-note">Бот напишет в личку. Сообщение может прийти с задержкой в несколько минут.</p>
       <p className="sky-note">Для напоминания сохраним на сервере выбранное место и событие.</p>
       <Button onClick={save} disabled={busy || expired || due < Date.now()}><Bell size={20} />{busy ? 'Подключаем…' : record?.status === 'pending' ? 'Сохранить время' : 'Напомнить в Telegram'}</Button></>}
-      {record?.status === 'pending' && <Button variant="ghost" onClick={cancel} disabled={busy}>Отменить напоминание</Button>}
+      <div className="delivery-test">
+        <p className="sky-note">Проверить, приходят ли сообщения от бота?</p>
+        <Button variant="secondary" onClick={testDelivery} disabled={busy || ['pending', 'sending'].includes(service.deliveryTest?.status ?? '')}>Проверить доставку</Button>
+        {service.deliveryTest && <p className="sky-note" role="status">{service.deliveryTest.status === 'pending' ? 'Тест в очереди. Обычно сообщение приходит в течение пяти минут.' : service.deliveryTest.status === 'sent' ? 'Тестовое сообщение отправлено в личку.' : service.deliveryTest.status === 'expired' ? 'Таймер не отправил тест вовремя. Доставка пока не работает.' : reminderStatus[service.deliveryTest.status]}</p>}
+        {service.deliveryTest && <Button variant="ghost" onClick={() => { void service.refresh(); }} disabled={service.loading}>Проверить статус</Button>}
+      </div>
+      {record?.status === 'pending'  && <Button variant="ghost" onClick={cancel} disabled={busy}>Отменить напоминание</Button>}
     </> : <>
       <p className="sky-note">Чтобы бот напомнил в личку, откройте приложение в Telegram.</p>
       <a className="telegram-open" href="https://t.me/astro_timing_bot" target="_blank" rel="noreferrer">Открыть бота</a>

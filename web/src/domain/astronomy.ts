@@ -95,7 +95,7 @@ function approaches(start: number, end: number): Candidate[] {
           kind: 'conjunction', key: `moon-${planet.body}`, body: Body.Moon, companion: planet.body,
           peak, from: peak - 18 * HOUR, to: peak + 18 * HOUR,
           title: `Луна рядом с ${planet.withName}`, subtitle: 'Сближение на небе',
-          description: `Луна и ${planet.name} окажутся рядом на небе. В выбранном окне оба объекта выше 8° над горизонтом, Солнце ниже −6°, а расстояние между объектами не превышает 6°.`,
+          description: `Луна и ${planet.name} окажутся рядом на небе. Найдите Луну: планета будет яркой точкой неподалёку. В указанное время оба объекта над горизонтом, а небо уже достаточно тёмное.`,
           equipmentDetail: 'Оба объекта видны невооружённым глазом. Телескоп понадобится только для деталей планеты.',
         });
       }

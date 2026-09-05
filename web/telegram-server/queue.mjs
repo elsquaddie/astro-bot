@@ -6,6 +6,7 @@ export async function dispatcherReady(env, now = Date.now()) {
   return !!state && now - state.value < 3_600_000;
 }
 export function reminderMessage(plan) {
+  if (plan.deliveryTest === true) return 'Проверка напоминаний: сообщение дошло 🌙\n\nТак бот будет напоминать о событиях. Приложение можно закрывать.';
   const { event, place } = plan;
   const date = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: place.timezone, hourCycle: 'h23' }).format(new Date(event.best));
   const guide = viewingGuide(event);

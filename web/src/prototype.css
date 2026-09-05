@@ -173,6 +173,9 @@
 .city-search { display: flex; align-items: center; gap: 9px; border: 1px solid #424963; border-radius: 9px; padding: 0 13px; min-height: 49px; color: #bbbcd1; }
 .city-search input { min-width: 0; width: 100%; font: inherit; font-size: 16px; border: 0; background: transparent; padding: 12px 0; color: #f1edf4; caret-color: #969bff; }
 .city-search input::placeholder { color: #979aaf; }
+.city-search:focus-within { border-color: #b3b6ff; box-shadow: 0 0 0 1px #b3b6ff; }
+.sky-sheet .city-search input:focus-visible,
+.device-screen:has(.sky-app) .city-search input:focus-visible { outline: none !important; }
 .city-list { display: grid; }
 .city-list button { border: 0; border-bottom: 1px solid #2a3249; background: none; color: #f0edf3; display: flex; align-items: center; justify-content: space-between; padding: 13px 0; font-size: 15px; text-align: left; line-height: 1.5; }
 .city-list small { display: block; color: #a1a5b9; font-size: 11px; }
@@ -207,3 +210,10 @@
 .reminder-lead label:has(input:disabled) { opacity: .4; cursor: default; }
 .reminder-lead input { accent-color: #969bff; }
 .telegram-open { color: #bcc0ff; text-align: center; display: block; padding: 12px; }
+
+.sky-compass { display: grid; justify-items: center; gap: 10px; text-align: center; }
+.sky-compass svg { width: 220px; max-width: 100%; max-height: none; }
+.sky-compass strong { font-weight: 500; font-size: 18px; }
+.sky-compass .sky-button { width: 100%; }
+
+.delivery-test { display: grid; gap: 12px; border-top: 1px solid #ffffff21; padding-top: 20px; }

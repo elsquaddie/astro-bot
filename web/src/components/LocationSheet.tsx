@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavigationArrow, MagnifyingGlass, CaretRight } from '@phosphor-icons/react';
 import { BottomSheet, KeyboardInput, useKeyboard } from '../platform';
-import { cities, locate, searchCities } from '../domain/locations';
+import { cities, locate, searchCities, LocationError, openLocationSettings } from '../domain/locations';
 import type { Place } from '../domain/types';
 import { Button } from './Button';
 
@@ -10,16 +10,19 @@ export function LocationSheet({ open, onClose, onSelect }: { open: boolean; onCl
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Place[]>([]);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState(false);
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
   const request = useRef(0);
+  const locationRequest = useRef<AbortController | null>(null);
   useEffect(() => {
-    request.current++;
-    setLocating(false); setError('');
+    request.current++; locationRequest.current?.abort();
+    setLocating(false); setError(''); setSettings(false);
     if (!open) setQuery('');
+    return () => { locationRequest.current?.abort(); };
   }, [open]);
   useEffect(() => {
-    setResults([]); setError('');
+    setResults([]); setError(''); setSettings(false);
     if (!open || query.trim().length < 2) { setSearching(false); return; }
     const abort = new AbortController();
     setSearching(true);
@@ -31,12 +34,13 @@ export function LocationSheet({ open, onClose, onSelect }: { open: boolean; onCl
     }, 350);
     return () => { clearTimeout(timer); abort.abort(); };
   }, [query, open]);
-  function close() { request.current++; keyboard.hide(); onClose(); }
-  function select(place: Place) { request.current++; keyboard.hide(); onSelect(place); }
+  function close() { request.current++; locationRequest.current?.abort(); keyboard.hide(); onClose(); }
+  function select(place: Place) { request.current++; locationRequest.current?.abort(); keyboard.hide(); onSelect(place); }
   async function detect() {
-    keyboard.hide(); const id = ++request.current; setLocating(true); setError('');
-    try { const place = await locate(); if (id === request.current) select(place); }
-    catch (e) { if (id === request.current) setError(e instanceof Error ? e.message : 'Не удалось определить место.'); }
+    keyboard.hide(); const id = ++request.current; setLocating(true); setError(''); setSettings(false);
+    locationRequest.current?.abort(); locationRequest.current = new AbortController();
+    try { const place = await locate(locationRequest.current.signal); if (id === request.current) select(place); }
+    catch (e) { if (id === request.current) { setError(e instanceof Error ? e.message : 'Не удалось определить место.'); setSettings(e instanceof LocationError && e.settings); } }
     finally { if (id === request.current) setLocating(false); }
   }
   const list = query.trim().length >= 2 ? results : cities;
@@ -57,6 +61,7 @@ export function LocationSheet({ open, onClose, onSelect }: { open: boolean; onCl
       </label>
       <div aria-live="polite">
         {error && <p className="sky-error">{error}</p>}
+        {settings && <Button variant="ghost" onClick={openLocationSettings}>Открыть настройки геолокации</Button>}
         {searching && <p className="sky-note">Ищем город…</p>}
         {!searching && !error && query.trim().length >= 2 && list.length === 0 && <p className="sky-note">Город не найден. Проверьте название.</p>}
       </div>

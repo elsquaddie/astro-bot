@@ -1,3 +1,4 @@
+import { SkyCompass } from './SkyCompass';
 import { viewingGuide } from '../domain/viewing';
 import type { SkyEvent } from '../domain/types';
 export function ViewingGuide({ event }: { event: SkyEvent }) {
@@ -7,7 +8,7 @@ export function ViewingGuide({ event }: { event: SkyEvent }) {
   const y = 165 - 144 * Math.sin(angle * Math.PI / 180);
   return <section className="viewing-guide" aria-label="Куда смотреть">
     <h2>Куда смотреть</h2><p className="sky-note">В указанное время наблюдения</p>
-    <p>{guide.compass}</p>
+    <SkyCompass bearing={guide.bearing} />
     <svg viewBox="0 0 300 200" role="img" aria-label={`Объект на высоте ${Math.round(angle)} градусов. Горизонт внизу, над головой — 90 градусов.`}>
       <path d="M24 21V165H278" fill="none" stroke="#596078" strokeDasharray="4 5" />
       <path d={`M24 165L${x} ${y}`} stroke="#969bff" strokeWidth="2" />

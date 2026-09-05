@@ -114,3 +114,30 @@ test('active reminders remain visible after more than 200 historical reminders',
   const result=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed()}}),env);
   assert.equal(result.reminders.length,200); assert.equal(result.reminders[0].id,'active');
 });
+
+test('delivery test uses the authenticated user and real queue, is throttled and isolated from event plans', async () => {
+  const env=environment();
+  const request=()=>new Request('https://sky.example/api/reminders',{method:'POST',headers:{'X-Telegram-Init-Data':signed()},body:JSON.stringify({action:'test',chat_id:999})});
+  const result=await reminderApi(request(),env);
+  assert.equal(result.status,'pending');
+  await assert.rejects(reminderApi(request(),env),/Проверка уже запущена/);
+  await dispatch(env,result.dueAt-1,async()=>{assert.fail('Must not send early');});
+  let count=0;
+  await dispatch(env,result.dueAt,async(_url:string,options:any)=>{count++;const body=JSON.parse(options.body);assert.equal(body.chat_id,123);assert.match(body.text,/Проверка напоминаний/);return Response.json({ok:true,result:{message_id:456}});});
+  assert.equal(count,1);
+  const own=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed()}}),env);
+  assert.equal(own.reminders.length,0); assert.equal(own.deliveryTest.status,'sent');
+  const other=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed(999)}}),env);
+  assert.equal(other.deliveryTest,null);
+  await dispatch(env,result.dueAt+1000,async()=>{assert.fail('Must not resend');});
+});
+
+test('test expiry is visible and retryable even when dispatcher never runs', async () => {
+  const env=environment();
+  const request=()=>new Request('https://sky.example/api/reminders',{method:'POST',headers:{'X-Telegram-Init-Data':signed()},body:'{"action":"test"}'});
+  const item=await reminderApi(request(),env);
+  env.DB.raw.prepare("UPDATE reminders SET end_at=?,created_at=?,event_key='delivery-test:older' WHERE id=?").run(Date.now()-1,Date.now()-1800001,item.id);
+  const own=await reminderApi(new Request('https://sky.example/api/reminders',{headers:{'X-Telegram-Init-Data':signed()}}),env);
+  assert.equal(own.deliveryTest.status,'expired');
+  assert.equal((await reminderApi(request(),env)).status,'pending');
+});
