@@ -106,3 +106,4 @@ Sites redirects /index.html to /. A cached followed response must be reconstruct
 
 - After a pending reminder is saved, show its due date/time prominently; hide the save form until «Изменить время», and disable submission when unchanged. Bookmarks have a separate action and confirmation. Saved items open their details using their saved place.
 - Only a scheduled invocation updates dispatch_schedule. A successful manual run or instant message test proves Telegram transport, not a working timer. Tests fail/turn uncertain immediately rather than silently waiting for a future retry.
+- Automatic dispatch runs every minute on Selectel (root@135.106.179.134), with an isolated Kazakhstan XHTTP proxy. See ../infrastructure/selectel/README.md. The shared VPN is not part of this service. Sites still hosts the application, D1 queue and bot token. GitHub Actions is manual recovery only; Timeweb was an obsolete, never-installed proposal.

@@ -1,0 +1,20 @@
+[Unit]
+Description=Private outbound proxy for astronomy reminders
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+LoadCredential=proxy-config.json:/etc/astro-reminders/proxy-v1.json
+ExecStart=/opt/astro-reminders/bin/xray-v26.3.27 run -config ${CREDENTIALS_DIRECTORY}/proxy-config.json
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

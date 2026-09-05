@@ -1,0 +1,11 @@
+[Unit]
+Description=Check astronomy reminders every minute
+
+[Timer]
+OnCalendar=minutely
+AccuracySec=1s
+Persistent=true
+Unit=astro-reminders.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=Deliver Smotri na nebo Telegram reminders
+Wants=network-online.target astro-reminders-proxy.service
+After=network-online.target astro-reminders-proxy.service
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+LoadCredential=dispatch-curl:/etc/astro-reminders/curl.conf
+ExecStart=/usr/bin/curl --fail --silent --show-error --max-time 180 --proxy socks5h://127.0.0.1:1087 --config ${CREDENTIALS_DIRECTORY}/dispatch-curl --request POST --header "X-Dispatch-Trigger: schedule" https://smotri-na-nebo.vektordaniil1.chatgpt.site/api/reminders/dispatch
+TimeoutStartSec=200
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
