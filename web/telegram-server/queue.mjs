@@ -30,7 +30,7 @@ export async function dispatch(env, now = Date.now(), send = fetch) {
       const response = await send(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(12_000),
         body: JSON.stringify({ chat_id: row.user_id, text: reminderMessage(JSON.parse(row.payload)),
-          reply_markup: { inline_keyboard: [[{ text: 'Открыть небо', web_app: { url: env.TELEGRAM_APP_URL } }]] } }),
+          reply_markup: { inline_keyboard: [[{ text: 'Открыть', web_app: { url: env.TELEGRAM_APP_URL } }]] } }),
       });
       reply = await response.json();
     } catch {

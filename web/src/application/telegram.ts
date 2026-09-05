@@ -1,3 +1,4 @@
+import '../vendor/telegram-web-app.js';
 import { useEffect, useState } from 'react';
 
 interface TelegramApp {
@@ -25,7 +26,6 @@ export function useTelegram() {
   const [inside, setInside] = useState(() => !!window.Telegram?.WebApp?.initData ||
     new URLSearchParams(location.hash.slice(1)).has('tgWebAppData'));
   useEffect(() => {
-    if (!inside) return;
     let app: TelegramApp | undefined;
     let active = true;
     const insets = () => {
@@ -37,22 +37,15 @@ export function useTelegram() {
     const initialize = () => {
       if (!active) return;
       app = window.Telegram?.WebApp;
-      if (!app?.initData) return;
-      setInside(true); window.dispatchEvent(new Event('telegram-ready')); app.ready(); app.expand();
+      if (!app) return;
+      app.ready();
+      if (!app.initData) return;
+      setInside(true); window.dispatchEvent(new Event('telegram-ready')); app.expand();
       app.setHeaderColor('#020611'); app.setBackgroundColor('#020611');
       insets(); app.onEvent('safeAreaChanged', insets); app.onEvent('contentSafeAreaChanged', insets);
     };
-    let script = document.querySelector<HTMLScriptElement>('script[data-telegram-sdk]');
-    if (window.Telegram?.WebApp) initialize();
-    else {
-      if (!script) {
-        script = document.createElement('script'); script.dataset.telegramSdk = 'true';
-        script.src = 'https://telegram.org/js/telegram-web-app.js?63'; script.async = true;
-        document.head.append(script);
-      }
-      script.addEventListener('load', initialize);
-    }
-    return () => { active = false; script?.removeEventListener('load', initialize);
+    initialize();
+    return () => { active = false;
       app?.offEvent('safeAreaChanged', insets); app?.offEvent('contentSafeAreaChanged', insets); };
   }, [inside]);
   return inside;

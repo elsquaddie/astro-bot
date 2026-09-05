@@ -9,8 +9,8 @@ export function telegramReply(update, appUrl) {
   if (!/^\/(start|help)(?:@[a-zA-Z0-9_]+)?(?:\s|$)/.test(message.text ?? '')) return { ok: true };
   return {
     method: 'sendMessage', chat_id: message.chat.id,
-    text: 'Смотри на небо.\n\nВыберите город в приложении — покажем ближайшие события, время и направление наблюдения.',
-    reply_markup: { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: appUrl } }]] },
+    text: 'Привет! Здесь можно узнать, какие астрономические события видны рядом с вами.\n\nОткройте приложение и выберите город — покажем, когда и куда смотреть и нужен ли телескоп. Нажмите «Напомнить мне» у события, чтобы получить сообщение сюда, в личку.',
+    reply_markup: { inline_keyboard: [[{ text: 'Открыть', web_app: { url: appUrl } }]] },
   };
 }
 export default {

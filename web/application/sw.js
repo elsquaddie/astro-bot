@@ -1,7 +1,13 @@
 const CACHE = 'smotri-app-__CACHE_VERSION__';
 const PRECACHE = __PRECACHE__;
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(PRECACHE)));
+  event.waitUntil(caches.open(CACHE).then(async cache => {
+    await cache.addAll(PRECACHE);
+    // A broken Telegram ready handshake hides the old UI's update button.
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (clients.some(client => /(?:tgWebAppData|tgWebAppPlatform)=/.test(new URL(client.url).hash)))
+      await self.skipWaiting();
+  }));
 });
 self.addEventListener('activate', event => { event.waitUntil(self.clients.claim()); });
 self.addEventListener('message', event => {

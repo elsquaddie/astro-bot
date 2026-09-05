@@ -5,11 +5,11 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../application/sw.js', import.meta.url), 'utf8')
   .replace('__CACHE_VERSION__', 'test').replace('__PRECACHE__', JSON.stringify(['/index.html', '/assets/app.js', '/assets/events.worker.js']));
-function worker() {
+function worker(clientUrls: string[] = []) {
   const listeners: Record<string, (event: any) => void> = {};
   const cached = new Map<string, string>([['/index.html', 'offline shell'], ['/assets/events.worker.js', 'astronomy worker']]);
   const calls: string[] = [];
-  const context = { URL, self: { location: { origin: 'https://sky.test' }, clients: { claim: async () => {} },
+  const context = { URL, self: { location: { origin: 'https://sky.test' }, clients: { claim: async () => {}, matchAll: async () => clientUrls.map(url => ({ url })) },
     skipWaiting: () => calls.push('activate'), addEventListener: (name: string, handler: any) => { listeners[name] = handler; } },
     caches: { open: async (name: string) => { calls.push(name); return { addAll: async (paths: string[]) => { calls.push(...paths); }, match: async (key: string) => cached.get(key) }; } },
     fetch: async () => { throw new Error('offline'); } };
@@ -46,4 +46,13 @@ test('installation waits for all assets and only explicit update activates waiti
   assert.ok(!app.calls.includes('activate'));
   app.listeners.message({ data: { type: 'ACTIVATE_UPDATE' } });
   assert.ok(app.calls.includes('activate'));
+});
+
+test('cached Telegram boot receives a complete update without needing the hidden update button', async () => {
+  const app=worker(['https://sky.test/#tgWebAppPlatform=ios&tgWebAppData=launch']);
+  let completion: Promise<void> | undefined;
+  app.listeners.install({waitUntil: (value: Promise<void>) => { completion=value; }});
+  assert.ok(completion); await completion;
+  assert.ok(app.calls.includes('activate'));
+  assert.ok(app.calls.indexOf('/assets/events.worker.js') < app.calls.indexOf('activate'));
 });

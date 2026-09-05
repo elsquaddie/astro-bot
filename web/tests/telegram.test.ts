@@ -6,6 +6,9 @@ const appUrl = 'https://sky.example/';
 test('start reply only targets originating private chat with fixed app URL', () => {
   const reply = telegramReply({ message: { chat: { type: 'private', id: 123 }, text: '/start payload' } }, appUrl);
   assert.equal(reply.chat_id, 123);
+  assert.equal(reply.reply_markup.inline_keyboard[0][0].text, 'Открыть');
+  assert.match(reply.text, /Привет!/);
+  assert.match(reply.text, /в личку/);
   assert.equal(reply.reply_markup.inline_keyboard[0][0].web_app.url, appUrl);
   assert.deepEqual(telegramReply({ message: { chat: { type: 'group', id: -123 }, text: '/start' } }, appUrl), { ok: true });
   assert.deepEqual(telegramReply({ message: { chat: { type: 'private', id: 123 }, text: 'hello' } }, appUrl), { ok: true });
