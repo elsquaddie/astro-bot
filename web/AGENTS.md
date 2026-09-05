@@ -85,3 +85,7 @@ When any text-entry control loses focus, dismiss the simulated keyboard. If the 
 - Fixed phone chrome should not animate with pushed screens. Screen content can animate; the status bar, camera cutout, and preview chrome should stay put.
 - Keep the keyboard below the home indicator/safe area layer in z-index, and above ordinary app UI while visible.
 - Keep the home indicator as the topmost safe-area layer in the z-index above everything else in the prototype.
+
+## Telegram launch
+
+User authorized publishing @astro_timing_bot on 2026-09-05. Sites project ID is persisted in .openai/hosting.json; reuse it. Build with build:telegram, package dist-telegram as dist. Keep bot token out of source/archive/browser; webhook secret is runtime-only. Worker replies to authenticated private /start and /help updates. Never claim timed reminders: launch release has no scheduler. Existing Python bot is not running alongside the webhook.

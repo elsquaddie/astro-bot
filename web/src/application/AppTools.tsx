@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { DownloadSimple } from '@phosphor-icons/react';
+import { useTelegram } from './telegram';
 import Prototype from '../Prototype';
 import { Button } from '../components/Button';
 
 type InstallPrompt = Event & { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> };
 export function Application() {
+  const insideTelegram = useTelegram();
   const [prompt, setPrompt] = useState<InstallPrompt | null>(null);
   const [installed, setInstalled] = useState(matchMedia('(display-mode: standalone)').matches);
   const [help, setHelp] = useState('');
@@ -47,7 +49,7 @@ export function Application() {
     update?.postMessage({ type: 'ACTIVATE_UPDATE' });
   }
   return <Prototype tools={<aside className="app-tools" aria-label="Приложение">
-    {!installed && <Button variant="secondary" onClick={install}><DownloadSimple size={20} />Установить приложение</Button>}
+    {!installed && !insideTelegram && <Button variant="secondary" onClick={install}><DownloadSimple size={20} />Установить приложение</Button>}
     {update && <Button variant="secondary" onClick={refresh}>Обновить приложение</Button>}
     <p className="sky-note" role="status">{offline ? 'Без сети. Поиск новых городов недоступен.' : ready ? 'События и сохранённое доступны без сети.' : ''}</p>
     {help && <p className="sky-note" role="status">{help}</p>}

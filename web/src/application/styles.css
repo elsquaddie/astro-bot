@@ -54,3 +54,5 @@ button, a, input, summary { -webkit-tap-highlight-color: transparent; }
   .application-sheet { animation: sheet-enter .18s ease-out; }
   @keyframes sheet-enter { from { opacity: 0; translate: 0 18px; } to { opacity: 1; translate: 0 0; } }
 }
+
+.sky-app { --app-top: max(env(safe-area-inset-top, 0px), var(--telegram-safe-top, 0px)); --sky-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--telegram-safe-bottom, 0px)); }

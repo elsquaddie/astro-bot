@@ -64,3 +64,13 @@ UI: локальные Manrope 300/400/500 с кириллицей, Phosphor Lig
 ## Основания для PWA
 
 Установка и manifest: [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable). Отдельная сборка: [Vite build options](https://vite.dev/config/build-options). Кэш содержит локальные шрифты и worker расчётов, внешние ответы геокодинга не перехватываются. Секретов и серверных токенов в сборке нет.
+
+## Telegram Mini App
+
+Бот: `@astro_timing_bot`. `npm run build:telegram` собирает самостоятельное приложение и Worker для Sites в `dist-telegram/`. Защищённый телефонный шаблон не используется в публикации.
+
+- `/start` и `/help` в личном чате возвращают кнопку Mini App. Обработчик проверяет секрет Telegram webhook; сообщение отправляется только в исходный личный чат.
+- SDK Telegram загружается только при запуске из Telegram; приложение учитывает безопасные отступы и скрывает установку PWA.
+- Токен бота остаётся в локальном `.env`, не входит в публикацию. Worker использует `TELEGRAM_WEBHOOK_SECRET` и `TELEGRAM_APP_URL` из секретов/настроек Sites.
+- `/api/health` показывает возможности опубликованной версии. Серверных таймеров в этой публикации нет: сохранение остаётся локальным, отложенные уведомления не включены. Для них нужен отдельный планировщик, очередь и проверка Telegram initData перед созданием подписки.
+- Источник протокола: https://core.telegram.org/bots/webapps и https://core.telegram.org/bots/api.

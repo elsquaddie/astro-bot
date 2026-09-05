@@ -14,7 +14,8 @@
     "prebuild": "npm run check:runtime",
     "build": "tsc && vite build && node scripts/prepare-sites-build.mjs",
     "build:app": "npm run check:runtime && tsc && vite build --config vite.application.config.ts",
-    "start:app": "vite preview --config vite.application.config.ts --host 127.0.0.1 --port 8876 --strictPort"
+    "start:app": "vite preview --config vite.application.config.ts --host 127.0.0.1 --port 8876 --strictPort",
+    "build:telegram": "npm run build:app && node scripts/build-telegram.mjs"
   },
   "dependencies": {
     "@fontsource/manrope": "^5.3.0",
