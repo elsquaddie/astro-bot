@@ -92,4 +92,6 @@ User authorized publishing @astro_timing_bot on 2026-09-05. Sites project ID is 
 
 Use native Telegram location where supported, with manual city fallback. Explain altitude with an arm-length fist and compass bearing for the stated observing time. Bot avatar and favicon use the existing open-ring mark. A requested server reminder stores the selected place; disclose this in its confirmation sheet.
 
-Telegram boot must not depend on a script fetched from telegram.org at runtime. Ship the official SDK locally and call ready before authentication-dependent features. Complete cached updates auto-activate for open Telegram launch URLs so a broken launch cannot hide the repair behind an inaccessible update button. Ordinary browser updates stay explicit. Vendor SDK is exempt from authored-module line limits.
+Telegram boot must not depend on a script fetched from telegram.org at runtime. Ship the official SDK locally and call ready before authentication-dependent features. Complete cached updates auto-activate so failed navigation cannot hide the repair behind an inaccessible update button. Vendor SDK is exempt from authored-module line limits.
+
+Sites redirects /index.html to /. A cached followed response must be reconstructed before serving navigation (redirect=manual); cover this with Response-based regression tests and repeat browser launches. Do not intercept /api navigation. Include the service-worker source in its cache version so worker-only fixes get an independent cache.

@@ -28,9 +28,10 @@ export default defineConfig({
       // The separate HTML input emits here; publish it as the standalone root.
       writeFileSync(resolve(out, 'index.html'), readFileSync(resolve(out, 'application/index.html')));
       const paths = ['/index.html', ...Object.keys(bundle).filter(path => !path.startsWith('application/')).map(path => '/' + path)];
-      const hash = createHash('sha256');
+      const template = readFileSync(resolve(root, 'application/sw.js'), 'utf8');
+      const hash = createHash('sha256').update(template);
       for (const path of paths.sort()) hash.update(path).update(readFileSync(out + path));
-      const source = readFileSync(resolve(root, 'application/sw.js'), 'utf8')
+      const source = template
         .replace('__CACHE_VERSION__', hash.digest('hex').slice(0, 16)).replace('__PRECACHE__', JSON.stringify(paths));
       writeFileSync(resolve(out, 'sw.js'), source);
     },
