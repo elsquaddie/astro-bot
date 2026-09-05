@@ -14,10 +14,12 @@ jobs:
     steps:
       - name: Send due reminders
         env:
+          DISPATCH_TRIGGER: ${{ github.event_name }}
           DISPATCH_SECRET: ${{ secrets.ASTRO_REMINDER_DISPATCH_SECRET }}
         run: |
           test -n "$DISPATCH_SECRET"
           curl --fail-with-body --silent --show-error --max-time 180 \
             --request POST \
+            --header "X-Dispatch-Trigger: $DISPATCH_TRIGGER" \
             --header "Authorization: Bearer $DISPATCH_SECRET" \
             'https://smotri-na-nebo.vektordaniil1.chatgpt.site/api/reminders/dispatch'
