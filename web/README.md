@@ -1,5 +1,7 @@
 # Смотри на небо.
 
+Telegram version 2 is live. Native location, bot avatar/favicon and D1 reminders are connected; the first GitHub dispatcher run succeeded. Verification and limits: [launch record](../docs/telegram-reminders-launch.md).
+
 Устанавливаемое веб-приложение AstroBot. React + TypeScript + Vite. Запускается отдельно от Python API и базы данных.
 
 ## Запуск и проверки
